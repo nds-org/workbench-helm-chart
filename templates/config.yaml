@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.workbench.resource_name }}
+  namespace: {{ .Values.workbench.namespace }}
+data:
+  # Enable TLS (HTTPS)?
+  tls.enable: "true"
+
+  # Customize this instance of Workbench
+  workbench.domain: "{{ .Values.workbench.domain }}"
+  workbench.name: "{{ .Values.workbench.name }}"
+  workbench.support_email: "{{ .Values.workbench.support_email }}"
+  workbench.analytics_tracking_id: ""
+  workbench.signin_url: "https://workbench.{{ .Values.workbench.domain }}/login/"
+  workbench.auth_url: "https://workbench.{{ .Values.workbench.domain }}/cauth/auth"
+
+  # IP address used by DNS service 
+  #workbench.ip: ""
+
+  # Customize your Workbench catalogs
+  git.spec_repo: "{{ .Values.workbench.specs.repo }}"
+  git.spec_branch: "{{ .Values.workbench.specs.branch }}"
+
+  # To enable account approval, you need to configure the SMTP relay below
+  workbench.require_account_approval: "{{ .Values.workbench.require_account_approval }}"
+
+  # If using a local smtp server, use the following. The defaults will only work for NCSA nebula VMs
+  smtp.host: "{{ .Values.smtp.host }}"
+  smtp.port: "{{ .Values.smtp.port }}"
+
+  # FIXME: this is probably insecure, and should likely be using a secret instead
+  # If using gmail as your SMTP service, use the following. If using 2-factor
+  # auth see https://support.google.com/accounts/answer/185833?hl=en
+  smtp.gmail_user: "{{ .Values.smtp.user }}"
+  smtp.gmail_pass: "{{ .Values.smtp.pass }}"
+
+  # FIXME: this is probably insecure, and should likely be using a secret instead
+  # If using AWS as your SMTP service, use the following
+  smtp.aws_ses_user: ""
+  smtp.aws_ses_password: ""
+
+  # FIXME: this is probably insecure, and should likely be using a secret instead
+  # For all other authenticated SMTP servers, use the following
+  smtp.smarthost_address: ""
+  smtp.smarthost_port: ""
+  smtp.smarthost_user: ""
+  smtp.smarthost_password: ""
+
+
+  # Oauth2
+  oauth2.client_id: ""
+  oauth2.client_secret: ""
+  # output of: openssl rand -hex 9
+  oauth2.cookie_secret: ""
+  oauth2.cookie_domain: ".{{ .Values.workbench.domain }}"

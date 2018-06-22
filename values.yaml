@@ -2,49 +2,47 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
-
-tls:
-  enabled: true
-  secretName: ndslabs-tls-secret
-  topLevelDomain: cis.ndslabs.org
-
-rbac:
-  serviceAccountName: workbench
-  clusterRoleName: workbench
-  clusterRoleBindingName: workbench
-
-apiserver:
-  image: ndslabs/apiserver:1.1.0
+workbench:
+  namespace: "workbench"
+  resource_name: "ndslabs-workbench"
+  name: "Labs Workbench"
+  domain: "local.ndslabs.org"
+  subdomain_prefix: "www"
+  volume_name: "global"
+  volume_path: "/ndslabs/data/volumes"
+  etcd_path: "/ndslabs/data/etcd"
+  support_email: "ndslabs-support@nationaldataservice.org"
+  require_account_approval: true
+  specs:
+    repo: "https://github.com/nds-org/ndslabs-specs.git"
+    branch: "master"
+  images:
+    webui: "ndslabs/angular-ui:latest"
+    apiserver: "ndslabs/apiserver:latest"
+    etcd: "ndslabs/etcd:2.2.5"
+    smtp: "namshi/smtp:latest"
+  
 
 smtp:
-  image: namshi/smtp:latest
+  # Specify host/port to use standalone SMTP
+  host: 
+  port: 
+  # Specify user/pass to use Gmail SMTP
+  user: 
+  pass: 
 
-webui:
-  image: ndslabs/angular-ui:1.1.0
+tls:
+  secretName: "ndslabs-tls-secret"
+  cert: |
+    -----BEGIN CERTIFICATE-----
+    Paste certificate contents here
+    -----END CERTIFICATE-----
 
-
-image:
-  repository: nginx
-  tag: stable
-
-service:
-  type: ClusterIP
-  port: 80
-
-ingress:
-  enabled: false
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  path: /
-  hosts:
-    - chart-example.local
-  tls: []
-#    - secretName: chart-example-tls
-#      hosts:
-#        - 
-
+  key: |
+    -----BEGIN RSA PRIVATE KEY-----
+    Paste private key contents here
+    -----END RSA PRIVATE KEY-----
+    
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little

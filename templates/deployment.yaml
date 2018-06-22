@@ -1,51 +1,329 @@
-apiVersion: apps/v1beta2
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.workbench.namespace }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.workbench.resource_name }}
+  namespace: {{ .Values.workbench.namespace }}
+  labels:
+    component: {{ .Values.workbench.resource_name }}
+spec:
+  selector:
+    component: {{ .Values.workbench.resource_name }}
+  ports:
+    - port: 80
+      name: webui
+      protocol: TCP
+      targetPort: 3000
+    - port: 30001
+      name: api
+      protocol: TCP
+    - name: smtp
+      port: 25
+      protocol: TCP
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Values.workbench.resource_name }}-auth
+  namespace: {{ .Values.workbench.namespace }}
+  annotations:
+    "nginx.ingress.kubernetes.io/auth-url": "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/cauth/auth"
+    "nginx.ingress.kubernetes.io/auth-signin": "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/login/"
+    "nginx.ingress.kubernetes.io/ssl-redirect": "true"
+    "nginx.ingress.kubernetes.io/force-ssl-redirect": "true"
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
+    secretName: {{ .Values.tls.secretName }}
+  rules:
+  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
+    http:
+      paths:
+      - path: /logs
+        backend:
+          serviceName: {{ .Values.workbench.resource_name }}
+          servicePort: 80
+      - path: /dashboard
+        backend:
+          serviceName: {{ .Values.workbench.resource_name }}
+          servicePort: 80
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Values.workbench.resource_name }}-open
+  namespace: {{ .Values.workbench.namespace }}
+  annotations:
+    "nginx.ingress.kubernetes.io/ssl-redirect": "true"
+    "nginx.ingress.kubernetes.io/force-ssl-redirect": "true"
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
+    secretName: {{ .Values.tls.secretName }}
+  rules:
+  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
+    http:
+      paths:
+      - path: /api
+        backend:
+          serviceName: {{ .Values.workbench.resource_name }}
+          servicePort: 30001
+      - path: /login
+        backend:
+          serviceName: {{ .Values.workbench.resource_name }}
+          servicePort: 80
+      - path: /landing
+        backend:
+          serviceName: {{ .Values.workbench.resource_name }}
+          servicePort: 80
+      - path: /dashboard
+        backend:
+          serviceName: {{ .Values.workbench.resource_name }}
+          servicePort: 80
+      - path: /cauth
+        backend:
+          serviceName: {{ .Values.workbench.resource_name }}
+          servicePort: 80
+      - path: /shared
+        backend:
+          serviceName: {{ .Values.workbench.resource_name }}
+          servicePort: 80
+      - path: /bower_components
+        backend:
+          serviceName: {{ .Values.workbench.resource_name }}
+          servicePort: 80
+      - path: /node_modules
+        backend:
+          serviceName: {{ .Values.workbench.resource_name }}
+          servicePort: 80
+      - path: /asset
+        backend:
+          serviceName: {{ .Values.workbench.resource_name }}
+          servicePort: 80
+      - path: /ConfigModule.js
+        backend:
+          serviceName: {{ .Values.workbench.resource_name }}
+          servicePort: 80
+#      - path: /oauth2
+#        backend:
+#          serviceName: oauth2-proxy
+#          servicePort: 4180
+---
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{ template "workbench.fullname" . }}
-  labels:
-    app: {{ template "workbench.name" . }}
-    chart: {{ template "workbench.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+  name: {{ .Values.workbench.resource_name }}
+  namespace: {{ .Values.workbench.namespace }}
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: 1
   selector:
     matchLabels:
-      app: {{ template "workbench.name" . }}
-      release: {{ .Release.Name }}
+      component: {{ .Values.workbench.resource_name }}
   template:
     metadata:
       labels:
-        app: {{ template "workbench.name" . }}
-        release: {{ .Release.Name }}
+        component: {{ .Values.workbench.resource_name }}
     spec:
+      #serviceAccountName: {{ .Values.workbench.resource_name }}
+      volumes:
+       - hostPath:
+            path: "{{ .Values.workbench.volume_path }}"
+         name: volumes
+       - hostPath:
+            path: "{{ .Values.workbench.etcd_path }}"
+         name: varetcd
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
-    {{- with .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
-      tolerations:
-{{ toYaml . | indent 8 }}
-    {{- end }}
+      - name: webui
+        image: {{ required "Must specify an image for ndslabs-webui" .Values.workbench.images.webui }}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        env:
+          - name: DOMAIN
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: workbench.domain
+          - name: APISERVER_SECURE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: tls.enable
+          - name: SIGNIN_URL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: workbench.signin_url
+          - name: ANALYTICS_ACCOUNT
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: workbench.analytics_tracking_id
+          - name: SUPPORT_EMAIL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: workbench.support_email
+          - name: APISERVER_HOST
+            value: "{{ .Values.workbench.subdomain_prefix }}.$(DOMAIN)"
+          - name: APISERVER_PORT
+            value: ""
+          - name: APISERVER_PATH
+            value: "/api"
+        readinessProbe:
+          httpGet:
+            path: /asset/png/favicon-2-32x32.png
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          timeoutSeconds: 120
+
+      - name: apiserver
+        image: {{ required "Must specify an image for ndslabs-apiserver" .Values.workbench.images.apiserver }}
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 30001
+          protocol: TCP
+        - containerPort: 30002
+          protocol: TCP
+        volumeMounts:
+          - name: volumes
+            mountPath: "{{ .Values.workbench.volume_path }}"
+        env:
+          - name: VOLUME_NAME
+            value: "{{ .Values.workbench.volume_name }}"
+          - name: VOLUME_PATH
+            value: "{{ .Values.workbench.volume_path }}"
+          - name: SUPPORT_EMAIL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: workbench.support_email
+          - name: REQUIRE_APPROVAL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: workbench.require_account_approval
+          - name: DOMAIN
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: workbench.domain
+          - name: SPEC_GIT_REPO
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: git.spec_repo
+          - name: SPEC_GIT_BRANCH
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: git.spec_branch
+          - name: SIGNIN_URL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: workbench.signin_url
+          - name: AUTH_URL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: workbench.auth_url
+          - name: CORS_ORIGIN_ADDR
+            value: "https://{{ .Values.workbench.subdomain_prefix }}.$(DOMAIN)"
+          - name: ETCD_ADDR
+            value: "localhost:4001"
+          - name: KUBERNETES_ADDR
+            value: "https://$(KUBERNETES_SERVICE_HOST):$(KUBERNETES_SERVICE_PORT_HTTPS)"
+          - name: INGRESS
+            value: "LoadBalancer"
+          - name: SERVICE_TIMEOUT
+            value: "10"
+          - name: TOKEN_PATH
+            value: "/var/run/secrets/kubernetes.io/serviceaccount/token"
+          - name: SMTP_HOST
+            value: "localhost"
+          - name: SMTP_TLS
+            value: "false"
+      - name: etcd
+        image: {{ required "Must specify an image for ndslabs-etcd" .Values.workbench.images.etcd }}
+        command:
+        - /usr/local/bin/etcd
+        - --bind-addr=0.0.0.0:4001
+        - --advertise-client-urls=http://127.0.0.1:4001
+        - --data-dir=/var/etcd/data
+        ports:
+        - containerPort: 4001
+          name: server
+          protocol: TCP
+        volumeMounts: 
+        - name: varetcd
+          mountPath: /var/etcd
+      - name: smtp
+        image: {{ required "Must specify an image for ndslabs-smtp" .Values.workbench.images.smtp }}
+        ports:
+        - containerPort: 25
+          name: server
+          protocol: TCP
+        env:
+          - name: MAILNAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: smtp.host
+          - name: PORT
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: smtp.port
+          - name: GMAIL_USER
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: smtp.gmail_user
+          - name: GMAIL_PASSWORD
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: smtp.gmail_pass
+          - name: SES_USER
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: smtp.aws_ses_user
+          - name: SES_PASSWORD
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: smtp.aws_ses_password
+          - name: SMARTHOST_ADDRESS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: smtp.smarthost_address
+          - name: SMARTHOST_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: smtp.smarthost_port
+          - name: SMARTHOST_USER
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: smtp.smarthost_user
+          - name: SMARTHOST_PASSWORD
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.workbench.resource_name }}
+                key: smtp.smarthost_password
