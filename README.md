@@ -167,9 +167,10 @@ release "joking-greyhound" deleted
 NOTE: This does not currently clean up or delete any user namespace or deployments.
 
 # TODO
+* Figure out how to correctly set the namespace listed by `helm list` (helm always lists "default" for some reason)
 * NFS / PVC vs hostPath option?
 * OAuth vs custom auth option?
 * Ingress Controller vs NodePort option?
 * API server nodeSelector for running user workload as an option?
-* Figure out how to correctly set the namespace listed by `helm list` (it always says "default" for some reason)
 * Support more options for SMTP?
+* Verbose documentation for configuration options
