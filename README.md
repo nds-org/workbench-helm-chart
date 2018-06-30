@@ -2,10 +2,8 @@
 A Helm chart for deploying [Labs Workbench](https://github.com/nds-org/ndslabs) on [Kubernetes](https://github.com/kubernetes/kubernetes).
 
 # Prerequisites
-* Kubernetes Cluster (either single or multi-node)
-* `kubectl` configured to talk to your cluster
-* Helm/Tiller installed in your cluster
-* Helm client available locally
+* Kubernetes Cluster (either single or multi-node) with `kubectl` locally to talk to your cluster
+* Helm/Tiller installed in your cluster with `helm` client available locally
 
 For an extremely simple 3-step process for getting all of the above set-up, check out [Data8's kubeadm-bootstrap](https://github.com/data-8/kubeadm-bootstrap)
 
