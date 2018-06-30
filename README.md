@@ -10,7 +10,7 @@ A Helm chart for deploying [Labs Workbench](https://github.com/nds-org/ndslabs) 
 For an extremely simple 3-step process for getting all of the above set-up, check out [Data8's kubeadm-bootstrap](https://github.com/data-8/kubeadm-bootstrap)
 
 # Usage
-Clone this repo locally (somewhere with `kubectl` access):
+Clone this repo locally (somewhere with `kubectl` access and the `helm` client installed):
 ```bash
 ubuntu@lambert8-dev:~$ git clone https://github.com/nds-org/workbench-helm-chart && cd workbench-helm-chart/
 ```
