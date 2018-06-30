@@ -32,10 +32,10 @@ Tweak the parameters in `values.yaml`:
 vi values.yaml
 ```
 
-NOTE 1: Be sure to set correct values for your `domain` and `support_email` in `values.yaml`.
-NOTE 2: Be sure to copy and paste the contents of your self-signed cert/key into the appropriate variables in `values.yaml`.
-NOTE 3: If you are using Kubernetes >= 1.8, you will likely need to enable RBAC in `values.yaml`.
-NOTE 4: If you do not specify an SMTP configurations, some environments may allow you to fall back to the default SMTP server (e.g. Nebula, SDSC, etc).
+* NOTE 1: Be sure to set correct values for your `domain` and `support_email` in `values.yaml`.
+* NOTE 2: Be sure to copy and paste the contents of your self-signed cert/key into the appropriate variables in `values.yaml`.
+* NOTE 3: If you are using Kubernetes >= 1.8, you will likely need to enable RBAC in `values.yaml`.
+* NOTE 4: If you do not specify an SMTP configurations, some environments may allow you to fall back to the default SMTP server (e.g. Nebula, SDSC, etc).
 
 Deploy the helm chart:
 ```bash
