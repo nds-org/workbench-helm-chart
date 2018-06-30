@@ -33,6 +33,11 @@ smtp:
   user: 
   pass: 
 
+# Insert your tls certificate and private key here
+# NOTE: To generate a new certificate, you can run the helper script included with this chart:
+#    ./generate-self-signed-cert.sh [DOMAIN]
+#
+# If you do not specify a domain, you will be prompted for one
 tls:
   secretName: "ndslabs-tls-secret"
   cert: |
