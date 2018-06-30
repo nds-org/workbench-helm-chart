@@ -17,11 +17,13 @@ workbench:
     repo: "https://github.com/nds-org/ndslabs-specs.git"
     branch: "master"
   images:
-    webui: "ndslabs/angular-ui:latest"
-    apiserver: "ndslabs/apiserver:latest"
+    webui: "ndslabs/angular-ui:1.1.0"
+    apiserver: "ndslabs/apiserver:1.1.0"
     etcd: "ndslabs/etcd:2.2.5"
     smtp: "namshi/smtp:latest"
   
+rbac:
+  enabled: true
 
 smtp:
   # Specify host/port to use standalone SMTP
@@ -35,12 +37,12 @@ tls:
   secretName: "ndslabs-tls-secret"
   cert: |
     -----BEGIN CERTIFICATE-----
-    Paste certificate contents here
+    PASTE CERTIFICATE CONTENTS HERE
     -----END CERTIFICATE-----
 
   key: |
     -----BEGIN RSA PRIVATE KEY-----
-    Paste private key contents here
+    PASTE PRIVATE KEY CONTENTS HERE
     -----END RSA PRIVATE KEY-----
     
 resources: {}
