@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.workbench.resource_name }}
-  namespace: {{ .Values.workbench.namespace }}
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
 data:
   # Enable TLS (HTTPS)?
   tls.enable: "true"
@@ -12,8 +12,13 @@ data:
   workbench.name: "{{ .Values.workbench.name }}"
   workbench.support_email: "{{ .Values.workbench.support_email }}"
   workbench.analytics_tracking_id: ""
-  workbench.signin_url: "https://workbench.{{ .Values.workbench.domain }}/login/"
-  workbench.auth_url: "https://workbench.{{ .Values.workbench.domain }}/cauth/auth"
+{{ if .Values.oauth.enabled }}
+  workbench.signin_url: "{{ .Values.oauth.signin_url }}"
+  workbench.auth_url: "{{ .Values.oauth.auth_url }}"
+{{ else }}
+  workbench.signin_url: "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/login/"
+  workbench.auth_url: "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/cauth/auth"
+{{ end }}
 
   # IP address used by DNS service 
   #workbench.ip: ""
@@ -32,8 +37,8 @@ data:
   # FIXME: this is probably insecure, and should likely be using a secret instead
   # If using gmail as your SMTP service, use the following. If using 2-factor
   # auth see https://support.google.com/accounts/answer/185833?hl=en
-  smtp.gmail_user: "{{ .Values.smtp.user }}"
-  smtp.gmail_pass: "{{ .Values.smtp.pass }}"
+  smtp.gmail_user: "{{ .Values.smtp.gmail_user }}"
+  smtp.gmail_pass: "{{ .Values.smtp.gmail_pass }}"
 
   # FIXME: this is probably insecure, and should likely be using a secret instead
   # If using AWS as your SMTP service, use the following
