@@ -3,8 +3,9 @@
 # Declare variables to be passed into your templates.
 
 workbench:
-  namespace: "workbench"
-  resource_name: "ndslabs-workbench"
+  dev:
+    enabled: false
+    uisrc: ""
   name: "Labs Workbench"
   domain: "local.ndslabs.org"
   subdomain_prefix: "www"
