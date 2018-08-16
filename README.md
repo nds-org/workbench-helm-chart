@@ -13,7 +13,7 @@ Clone this repo locally (somewhere with `kubectl` access and the `helm` client i
 ubuntu@lambert8-dev:~$ git clone https://github.com/nds-org/workbench-helm-chart && cd workbench-helm-chart/
 ```
 
-Have a valid, signed certificate, or you can generate a self-signed certificate:
+Have a [valid/signed TLS certificate](https://letsencrypt.org/), or you can generate a self-signed certificate:
 ```bash
 ubuntu@lambert8-dev:~/workbench-helm-chart$ ./generate-self-signed-cert.sh example.com
 
@@ -31,7 +31,7 @@ vi values.yaml
 ```
 
 * NOTE 1: Be sure to set correct values for your `domain` and `support_email` in `values.yaml`.
-* NOTE 2: Be sure to copy and paste the contents of your self-signed cert/key into the appropriate variables in `values.yaml`.
+* NOTE 2: Be sure to copy and paste the contents of your TLS cert/key into the appropriate variables in `values.yaml`.
 * NOTE 3: If you are using Kubernetes >= 1.8, you will likely need to enable RBAC in `values.yaml`.
 * NOTE 4: If you do not specify an SMTP configurations, some environments may allow you to fall back to the default SMTP server (e.g. Nebula, SDSC, etc).
 
