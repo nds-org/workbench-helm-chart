@@ -146,6 +146,29 @@ spec:
           servicePort: 80
 ---
 apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/permanent-redirect: "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/landing/"
+  name: {{ .Release.Name }}-root
+  namespace: {{ .Release.Namespace }}
+spec:
+  rules:
+  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
+    http:
+      paths:
+      - backend:
+          serviceName: {{ .Release.Name }}
+          servicePort: 80
+        path: /
+  tls:
+  - hosts:
+    - {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
+    secretName: {{ .Values.tls.secretName }}
+---
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}
