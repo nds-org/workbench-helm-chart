@@ -172,10 +172,20 @@ spec:
        - hostPath:
             path: "{{ .Values.workbench.etcd_path }}"
          name: varetcd
+{{ if .Values.workbench.dev.enabled | default false }}
+       - hostPath:
+            path: "{{ .Values.workbench.dev.uisrc }}"
+         name: uisrc
+{{ end }}
       containers:
       - name: webui
         image: {{ required "Must specify an image for ndslabs-webui" .Values.workbench.images.webui }}
         imagePullPolicy: Always
+{{ if .Values.workbench.dev.enabled | default false }}
+        volumeMounts: 
+        - name: uisrc
+          mountPath: "/home"
+{{ end }}
         ports:
         - containerPort: 3000
           protocol: TCP
