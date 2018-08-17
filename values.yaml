@@ -3,8 +3,9 @@
 # Declare variables to be passed into your templates.
 
 workbench:
-  namespace: "workbench"
-  resource_name: "ndslabs-workbench"
+  dev:
+    enabled: false
+    uisrc: ""
   name: "Labs Workbench"
   domain: "local.ndslabs.org"
   subdomain_prefix: "www"
@@ -22,6 +23,12 @@ workbench:
     etcd: "ndslabs/etcd:2.2.5"
     smtp: "namshi/smtp:latest"
   
+# FIXME: This has not been tested
+oauth:
+  enabled: false
+  signin_url: ""
+  auth_url: ""
+
 rbac:
   enabled: true
 
