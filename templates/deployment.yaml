@@ -168,6 +168,22 @@ spec:
     - {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
     secretName: {{ .Values.tls.secretName }}
 ---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-etcd
+  namespace: {{ .Release.Namespace }}
+  annotations:
+  {{- if .Values.workbench.persistence.storageClass }}
+    volume.beta.kubernetes.io/storage-class: {{ .Values.workbench.persistence.storageClass | quote }}
+  {{- end }}
+spec:
+  accessModes:
+    - {{ .Values.workbench.persistence.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.workbench.persistence.size | quote }}
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -189,11 +205,8 @@ spec:
       serviceAccountName: {{ .Release.Name }}
 {{ end }}
       volumes:
-       - hostPath:
-            path: "{{ .Values.workbench.volume_path }}"
-         name: volumes
-       - hostPath:
-            path: "{{ .Values.workbench.etcd_path }}"
+       - persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-etcd
          name: varetcd
 {{ if .Values.workbench.dev.enabled | default false }}
        - hostPath:
@@ -240,8 +253,8 @@ spec:
                 key: workbench.support_email
           - name: APISERVER_HOST
             value: "{{ .Values.workbench.subdomain_prefix }}.$(DOMAIN)"
-          - name: APISERVER_PORT
-            value: ""
+          - name: NDSLABS_APISERVER_SERVICE_PORT
+            value: "30001"
           - name: APISERVER_PATH
             value: "/api"
         readinessProbe:
@@ -262,14 +275,9 @@ spec:
           protocol: TCP
         - containerPort: 30002
           protocol: TCP
-        volumeMounts:
-          - name: volumes
-            mountPath: "{{ .Values.workbench.volume_path }}"
         env:
-          - name: VOLUME_NAME
-            value: "{{ .Values.workbench.volume_name }}"
-          - name: VOLUME_PATH
-            value: "{{ .Values.workbench.volume_path }}"
+          - name: STORAGE_CLASS
+            value: "{{ .Values.workbench.persistence.storageClass }}"
           - name: SUPPORT_EMAIL
             valueFrom:
               configMapKeyRef:

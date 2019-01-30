@@ -10,8 +10,6 @@ workbench:
   domain: "local.ndslabs.org"
   subdomain_prefix: "www"
   volume_name: "global"
-  volume_path: "/ndslabs/data/volumes"
-  etcd_path: "/ndslabs/data/etcd"
   support_email: "ndslabs-support@nationaldataservice.org"
   require_account_approval: true
   specs:
@@ -22,6 +20,9 @@ workbench:
     apiserver: "ndslabs/apiserver:1.1.0"
     etcd: "ndslabs/etcd:2.2.5"
     smtp: "namshi/smtp:latest"
+  persistence:
+    accessMode: "ReadWriteMany"
+    size: "1Gi"
   
 # FIXME: This has not been tested
 oauth:
