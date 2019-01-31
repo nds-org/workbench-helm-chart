@@ -65,6 +65,7 @@ metadata:
   name: {{ .Release.Name }}-auth
   namespace: {{ .Release.Namespace }}
   annotations:
+    "kubernetes.io/ingress.class": "nginx"
     "nginx.ingress.kubernetes.io/auth-url": "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/cauth/auth"
     "nginx.ingress.kubernetes.io/auth-signin": "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/login/"
     "nginx.ingress.kubernetes.io/ssl-redirect": "true"
@@ -93,6 +94,7 @@ metadata:
   name: {{ .Release.Name }}-open
   namespace: {{ .Release.Namespace }}
   annotations:
+    "kubernetes.io/ingress.class": "nginx"
     "nginx.ingress.kubernetes.io/ssl-redirect": "true"
     "nginx.ingress.kubernetes.io/force-ssl-redirect": "true"
 spec:
@@ -149,6 +151,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   annotations:
+    kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/permanent-redirect: "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/landing/"
@@ -276,6 +279,8 @@ spec:
         - containerPort: 30002
           protocol: TCP
         env:
+          - name: SHARED_VOLUME_PATH
+            value: "/tmp/shared"
           - name: STORAGE_CLASS
             value: "{{ .Values.workbench.persistence.storageClass }}"
           - name: SUPPORT_EMAIL

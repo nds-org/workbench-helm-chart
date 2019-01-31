@@ -10,18 +10,18 @@ workbench:
   domain: "local.ndslabs.org"
   subdomain_prefix: "www"
   volume_name: "global"
-  support_email: "ndslabs-support@nationaldataservice.org"
+  support_email: "you@email.org"
   require_account_approval: true
   specs:
     repo: "https://github.com/nds-org/ndslabs-specs.git"
     branch: "master"
   images:
-    webui: "ndslabs/angular-ui:1.1.0"
-    apiserver: "ndslabs/apiserver:1.1.0"
+    webui: "ndslabs/angular-ui:develop"
+    apiserver: "ndslabs/apiserver:develop"
     etcd: "ndslabs/etcd:2.2.5"
     smtp: "namshi/smtp:latest"
   persistence:
-    accessMode: "ReadWriteMany"
+    accessMode: "ReadWriteOnce"
     size: "1Gi"
   
 # FIXME: This has not been tested
@@ -38,8 +38,8 @@ smtp:
   host: 
   port: 
   # Specify user/pass to use Gmail SMTP
-  user: 
-  pass: 
+  gmail_user: 
+  gmail_pass: 
 
 # Insert your tls certificate and private key here
 # NOTE: To generate a new certificate, you can run the helper script included with this chart:
@@ -50,13 +50,10 @@ tls:
   secretName: "ndslabs-tls-secret"
   cert: |
     -----BEGIN CERTIFICATE-----
-    PASTE CERTIFICATE CONTENTS HERE
     -----END CERTIFICATE-----
-
   key: |
-    -----BEGIN RSA PRIVATE KEY-----
-    PASTE PRIVATE KEY CONTENTS HERE
-    -----END RSA PRIVATE KEY-----
+    -----BEGIN PRIVATE KEY-----
+    -----END PRIVATE KEY-----
     
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
