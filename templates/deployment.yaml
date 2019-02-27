@@ -11,7 +11,7 @@ metadata:
   name: {{ .Release.Name }}
 rules:
 - apiGroups: ["", "extensions", "apps", "batch", "policy", "rbac.authorization.k8s.io"]
-  resources: ["componentstatuses", "persistentvolumeclaims", "replicasets", "deployments", "events", "endpoints", "pods", "pods/log", "namespaces", "services", "replicationcontrollers", "secrets", "resourcequotas", "limitranges"]
+  resources: ["componentstatuses", "persistentvolumeclaims", "replicasets", "deployments", "events", "endpoints", "pods", "pods/log", "pods/exec", "namespaces", "services", "replicationcontrollers", "secrets", "resourcequotas", "limitranges"]
   verbs: ["get", "list", "watch", "update", "patch", "create", "delete"]
 - apiGroups: [""]
   resources: ["configmaps"]
@@ -213,6 +213,8 @@ spec:
         - containerPort: 3000
           protocol: TCP
         env:
+          - name: NDSLABS_APISERVER_SERVICE_PORT
+            value: "30001"
           - name: DOMAIN
             valueFrom:
               configMapKeyRef:
