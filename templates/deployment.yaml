@@ -307,6 +307,16 @@ spec:
               configMapKeyRef:
                 name: {{ .Release.Name }}
                 key: workbench.auth_url
+          - name: NODE_SELECTOR_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.node_selector_name
+          - name: NODE_SELECTOR_VALUE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.node_selector_value
           - name: CORS_ORIGIN_ADDR
             value: "https://{{ .Values.workbench.subdomain_prefix }}.$(DOMAIN)"
           - name: ETCD_ADDR

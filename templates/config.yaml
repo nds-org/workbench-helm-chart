@@ -12,6 +12,8 @@ data:
   workbench.name: "{{ .Values.workbench.name }}"
   workbench.support_email: "{{ .Values.workbench.support_email }}"
   workbench.analytics_tracking_id: ""
+  workbench.node_selector_name: "{{ .Values.workbench.node_selector_name }}"
+  workbench.node_selector_value: "{{ .Values.workbench.node_selector_value }}"
 {{ if .Values.oauth.enabled }}
   workbench.signin_url: "{{ .Values.oauth.signin_url }}"
   workbench.auth_url: "{{ .Values.oauth.auth_url }}"
