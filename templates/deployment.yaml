@@ -334,6 +334,16 @@ spec:
             value: "localhost"
           - name: SMTP_TLS
             value: "false"
+          - name: HOME_PVC_SUFFIX
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.home_storage.home_pvc_suffix
+          - name: PVC_STORAGE_CLASS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.home_storage.pvc_storage_class
       - name: etcd
         image: {{ required "Must specify an image for ndslabs-etcd" .Values.workbench.images.etcd }}
         command:
