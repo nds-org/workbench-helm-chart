@@ -170,6 +170,30 @@ spec:
   - hosts:
     - {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
     secretName: {{ .Values.tls.secretName }}
+{{- if .Values.workbench.etcd_storage.persistent.type | default false }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-etcd
+spec:
+  storageClassName: ""
+  capacity:
+    storage: {{ .Values.workbench.etcd_storage.size | quote }}
+  accessModes:
+    - {{ .Values.workbench.etcd_storage.access_mode | quote }}
+  {{- if eq .Values.workbench.etcd_storage.persistent.type "aws" | default nil }}
+  awsElasticBlockStore:
+    volumeID: {{ .Values.workbench.etcd_storage.persistent.volume_id | quote }}
+  {{- else if eq .Values.workbench.etcd_storage.persistent.type "gce" | default nil }}
+  gcePersistentDisk:
+    pdName: {{ .Values.workbench.etcd_storage.persistent.volume_id | quote }}
+  {{- end }}
+    fsType: ext4
+  claimRef:
+    namespace: {{ .Release.Namespace }}
+    name: {{ .Release.Name }}-etcd
+{{- end }}
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -177,15 +201,19 @@ metadata:
   name: {{ .Release.Name }}-etcd
   namespace: {{ .Release.Namespace }}
   annotations:
-  {{- if .Values.workbench.persistence.storageClass }}
-    volume.beta.kubernetes.io/storage-class: {{ .Values.workbench.persistence.storageClass | quote }}
+  {{- if .Values.workbench.etcd_storage.storage_class }}
+    volume.beta.kubernetes.io/storage-class: {{ .Values.workbench.etcd_storage.storage_class | quote }}
   {{- end }}
 spec:
+  {{- if .Values.workbench.etcd_storage.persistent.type | default false }}
+  storageClassName: ""
+  volumeName: {{ .Release.Name }}-etcd
+  {{- end }}
   accessModes:
-    - {{ .Values.workbench.persistence.accessMode | quote }}
+    - {{ .Values.workbench.etcd_storage.access_mode | quote }}
   resources:
     requests:
-      storage: {{ .Values.workbench.persistence.size | quote }}
+      storage: {{ .Values.workbench.etcd_storage.size | quote }}
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -281,8 +309,6 @@ spec:
         env:
           - name: SHARED_VOLUME_PATH
             value: "/tmp/shared"
-          - name: STORAGE_CLASS
-            value: "{{ .Values.workbench.persistence.storageClass }}"
           - name: SUPPORT_EMAIL
             valueFrom:
               configMapKeyRef:
