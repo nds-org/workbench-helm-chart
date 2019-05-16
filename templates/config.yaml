@@ -8,6 +8,7 @@ data:
   tls.enable: "true"
 
   # Customize this instance of Workbench
+  workbench.subdomain_prefix: "{{ .Values.workbench.subdomain_prefix }}"
   workbench.domain: "{{ .Values.workbench.domain }}"
   workbench.name: "{{ .Values.workbench.name }}"
   workbench.support_email: "{{ .Values.workbench.support_email }}"
