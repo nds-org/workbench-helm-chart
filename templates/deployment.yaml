@@ -326,8 +326,16 @@ spec:
             value: "https://$(KUBERNETES_SERVICE_HOST):$(KUBERNETES_SERVICE_PORT_HTTPS)"
           - name: INGRESS
             value: "LoadBalancer"
-          - name: SERVICE_TIMEOUT
-            value: "10"
+          - name: TIMEOUT
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.timeout
+          - name: INACTIVITY_TIMEOUT
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.inactivity_timeout
           - name: TOKEN_PATH
             value: "/var/run/secrets/kubernetes.io/serviceaccount/token"
           - name: SMTP_HOST

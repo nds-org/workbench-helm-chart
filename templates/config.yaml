@@ -21,6 +21,8 @@ data:
 {{ end }}
   workbench.home_storage.home_pvc_suffix: "{{ .Values.workbench.home_storage.home_pvc_suffix }}"
   workbench.home_storage.pvc_storage_class: "{{ .Values.workbench.home_storage.pvc_storage_class }}"
+  workbench.timeout: "{{ .Values.workbench.timeout }}"
+  workbench.inactivity_timeout: "{{ .Values.workbench.inactivity_timeout }}"
 
   # IP address used by DNS service 
   #workbench.ip: ""
