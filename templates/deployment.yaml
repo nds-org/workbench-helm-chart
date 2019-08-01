@@ -220,6 +220,11 @@ spec:
               configMapKeyRef:
                 name: {{ .Release.Name }}
                 key: workbench.domain
+          - name: SUBDOMAIN_PREFIX
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.subdomain_prefix
           - name: APISERVER_SECURE
             valueFrom:
               configMapKeyRef:
