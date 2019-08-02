@@ -382,7 +382,7 @@ spec:
         image: {{ required "Must specify an image for ndslabs-etcd" .Values.workbench.images.etcd }}
         command:
         - /usr/local/bin/etcd
-        - --bind-addr=0.0.0.0:4001
+        - --listen-client-urls=http://0.0.0.0:4001
         - --advertise-client-urls=http://127.0.0.1:4001
         - --data-dir=/var/etcd/data
         ports:
