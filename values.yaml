@@ -13,6 +13,7 @@ workbench:
   volume_path: "/ndslabs/data/volumes"
   etcd_path: "/ndslabs/data/etcd"
   support_email: "ndslabs-support@nationaldataservice.org"
+  analytics_tracking_id: ""
   require_account_approval: true
   specs:
     repo: "https://github.com/nds-org/ndslabs-specs.git"
