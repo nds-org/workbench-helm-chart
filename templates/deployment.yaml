@@ -140,6 +140,10 @@ spec:
         backend:
           serviceName: {{ .Release.Name }}
           servicePort: 80
+      - path: /swagger.yaml
+        backend:
+          serviceName: {{ .Release.Name }}
+          servicePort: 80
       - path: /ConfigModule.js
         backend:
           serviceName: {{ .Release.Name }}
