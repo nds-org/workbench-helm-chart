@@ -142,6 +142,10 @@ spec:
         backend:
           serviceName: {{ .Release.Name }}
           servicePort: 80
+      - path: /swagger.yaml
+        backend:
+          serviceName: {{ .Release.Name }}
+          servicePort: 80
       - path: /ConfigModule.js
         backend:
           serviceName: {{ .Release.Name }}
@@ -257,11 +261,18 @@ spec:
         - containerPort: 3000
           protocol: TCP
         env:
+          - name: NDSLABS_APISERVER_SERVICE_PORT
+            value: "30001"
           - name: DOMAIN
             valueFrom:
               configMapKeyRef:
                 name: {{ .Release.Name }}
                 key: workbench.domain
+          - name: SUBDOMAIN_PREFIX
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.subdomain_prefix
           - name: APISERVER_SECURE
             valueFrom:
               configMapKeyRef:
@@ -344,6 +355,16 @@ spec:
               configMapKeyRef:
                 name: {{ .Release.Name }}
                 key: workbench.auth_url
+          - name: NODE_SELECTOR_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.node_selector_name
+          - name: NODE_SELECTOR_VALUE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.node_selector_value
           - name: CORS_ORIGIN_ADDR
             value: "https://{{ .Values.workbench.subdomain_prefix }}.$(DOMAIN)"
           - name: ETCD_ADDR
