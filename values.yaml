@@ -34,6 +34,11 @@ workbench:
   home_storage:
     home_pvc_suffix: "-home"
     pvc_storage_class: "nfs"
+  shared_storage:
+    enabled: true
+    volume_name: "shared"
+    volume_path: "/shared"
+    read_only: true
   timeout: 30
   inactivity_timeout: 480
 

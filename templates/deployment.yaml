@@ -318,8 +318,23 @@ spec:
         - containerPort: 30002
           protocol: TCP
         env:
+{{ if .Values.workbench.shared_storage.enabled }}
           - name: SHARED_VOLUME_PATH
-            value: "/tmp/shared"
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.shared_storage.volume_path
+          - name: SHARED_VOLUME_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.shared_storage.volume_name
+          - name: SHARED_VOLUME_READ_ONLY
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.shared_storage.read_only
+{{ end }}
           - name: SUPPORT_EMAIL
             valueFrom:
               configMapKeyRef:

@@ -27,6 +27,13 @@ data:
   workbench.timeout: "{{ .Values.workbench.timeout }}"
   workbench.inactivity_timeout: "{{ .Values.workbench.inactivity_timeout }}"
 
+
+{{ if .Values.workbench.shared_storage.enabled }}
+  workbench.shared_storage.volume_name: "{{ .Values.workbench.shared_storage.volume_name }}"
+  workbench.shared_storage.volume_path: "{{ .Values.workbench.shared_storage.volume_path }}"
+  workbench.shared_storage.read_only: "{{ .Values.workbench.shared_storage.read_only }}"
+{{ end }}
+
   # IP address used by DNS service 
   #workbench.ip: ""
 
