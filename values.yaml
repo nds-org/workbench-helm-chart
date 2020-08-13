@@ -15,6 +15,7 @@ workbench:
   support_email: "ndslabs-support@nationaldataservice.org"
   analytics_tracking_id: ""
   require_account_approval: true
+  cors_origin_addr: "https://www.local.ndslabs.org,http://localhost:3000"
   specs:
     repo: "https://github.com/nds-org/ndslabs-specs.git"
     branch: "master"

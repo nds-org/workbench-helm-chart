@@ -219,7 +219,7 @@ spec:
     requests:
       storage: {{ .Values.workbench.etcd_storage.size | quote }}
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}
@@ -366,7 +366,10 @@ spec:
                 name: {{ .Release.Name }}
                 key: workbench.node_selector_value
           - name: CORS_ORIGIN_ADDR
-            value: "https://{{ .Values.workbench.subdomain_prefix }}.$(DOMAIN)"
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.cors_origin_addr
           - name: ETCD_ADDR
             value: "localhost:4001"
           - name: KUBERNETES_ADDR
