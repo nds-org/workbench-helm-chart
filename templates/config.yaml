@@ -24,6 +24,17 @@ data:
 {{ end }}
   workbench.home_storage.home_pvc_suffix: "{{ .Values.workbench.home_storage.home_pvc_suffix }}"
   workbench.home_storage.pvc_storage_class: "{{ .Values.workbench.home_storage.pvc_storage_class }}"
+
+{{ if .Values.workbench.shared_storage.enabled }}
+  workbench.shared_storage.read_only: "{{ .Values.workbench.shared_storage.read_only }}"
+  workbench.shared_storage.volume_name: {{ .Values.workbench.shared_storage.volume_name }}
+  workbench.shared_storage.volume_path: {{ .Values.workbench.shared_storage.volume_path }}
+{{ else }}
+  workbench.shared_storage.volume_path: /tmp/shared
+  workbench.shared_storage.read_only: "true"
+  workbench.shared_storage.volume_name: "shared"
+{{ end }}
+
   workbench.timeout: "{{ .Values.workbench.timeout }}"
   workbench.inactivity_timeout: "{{ .Values.workbench.inactivity_timeout }}"
 
