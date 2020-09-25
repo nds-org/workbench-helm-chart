@@ -219,7 +219,7 @@ spec:
     requests:
       storage: {{ .Values.workbench.etcd_storage.size | quote }}
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}
@@ -318,8 +318,23 @@ spec:
         - containerPort: 30002
           protocol: TCP
         env:
+{{ if .Values.workbench.shared_storage.enabled }}
           - name: SHARED_VOLUME_PATH
-            value: "/tmp/shared"
+            valueFrom:
+              configMapKeyRef:
+                key: workbench.shared_storage.volume_path
+                name: workbench
+          - name: SHARED_VOLUME_NAME
+            valueFrom:
+              configMapKeyRef:
+                key: workbench.shared_storage.volume_name
+                name: workbench
+          - name: SHARED_VOLUME_READ_ONLY
+            valueFrom:
+              configMapKeyRef:
+                key: workbench.shared_storage.read_only
+                name: workbench
+{{ end }}
           - name: SUPPORT_EMAIL
             valueFrom:
               configMapKeyRef:
