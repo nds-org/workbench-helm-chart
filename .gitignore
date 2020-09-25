@@ -17,3 +17,4 @@
 .c9/
 # Self-signed certificates
 certs/
+acmedns*.json
