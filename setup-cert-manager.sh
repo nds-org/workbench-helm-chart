@@ -4,6 +4,7 @@
 #
 # Usage: ./setup-cert-manager.sh <DOMAIN> [ALLOW_FROM_ADDRESS_RANGE]
 #
+set -e
 
 # The final file NEEDS to be set to acmedns.json
 CREDENTIALS_BASE="acmedns"
@@ -30,6 +31,9 @@ sudo apt-get -qq install \
   ca-certificates
 
 # Install cert-manager Helm chart
+sudo helm repo add jetstack https://charts.jetstack.io
+sudo helm repo update
+kubectl get ns ${CM_NAMESPACE} || kubectl create ns ${CM_NAMESPACE}
 sudo helm upgrade --install   cert-manager jetstack/cert-manager   --namespace ${CM_NAMESPACE}   --version v${CM_VERSION}  --set 'extraArgs={--dns01-recursive-nameservers-only,--dns01-recursive-nameservers=8.8.8.8:53\,1.1.1.1:53}' --set installCRDs=true
 
 # TODO: Re-use previous registration?
