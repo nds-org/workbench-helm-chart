@@ -229,6 +229,11 @@ spec:
                 key: workbench.shared_storage.read_only
                 name: workbench
 {{ end }}
+          - name: WORKBENCH_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.name
           - name: TLS_ISSUER
             valueFrom:
               configMapKeyRef:
