@@ -51,6 +51,11 @@ oauth:
   signin_url: ""
   auth_url: ""
 
+certmgr:
+  cluster_issuer: "acmedns-issuer"
+  issuer: ""
+  namespace: ""
+
 rbac:
   enabled: true
 
@@ -68,13 +73,8 @@ smtp:
 #
 # If you do not specify a domain, you will be prompted for one
 tls:
-  secretName: "ndslabs-tls-secret"
-  cert: |
-    -----BEGIN CERTIFICATE-----
-    -----END CERTIFICATE-----
-  key: |
-    -----BEGIN PRIVATE KEY-----
-    -----END PRIVATE KEY-----
+  enabled: true
+  secretName: "ndslabs-tls"
     
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

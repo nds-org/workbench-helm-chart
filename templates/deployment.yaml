@@ -58,122 +58,6 @@ spec:
     - name: smtp
       port: 25
       protocol: TCP
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: {{ .Release.Name }}-auth
-  namespace: {{ .Release.Namespace }}
-  annotations:
-    "kubernetes.io/ingress.class": "nginx"
-    "nginx.ingress.kubernetes.io/auth-url": "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/cauth/auth"
-    "nginx.ingress.kubernetes.io/auth-signin": "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/login/"
-    "nginx.ingress.kubernetes.io/ssl-redirect": "true"
-    "nginx.ingress.kubernetes.io/force-ssl-redirect": "true"
-spec:
-  tls:
-  - hosts:
-    - {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
-    secretName: {{ .Values.tls.secretName }}
-  rules:
-  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
-    http:
-      paths:
-      - path: /logs
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
-      - path: /dashboard
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: {{ .Release.Name }}-open
-  namespace: {{ .Release.Namespace }}
-  annotations:
-    "kubernetes.io/ingress.class": "nginx"
-    "nginx.ingress.kubernetes.io/ssl-redirect": "true"
-    "nginx.ingress.kubernetes.io/force-ssl-redirect": "true"
-spec:
-  tls:
-  - hosts:
-    - {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
-    secretName: {{ .Values.tls.secretName }}
-  rules:
-  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
-    http:
-      paths:
-      - path: /api
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 30001
-      - path: /login
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
-      - path: /landing
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
-      - path: /dashboard
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
-      - path: /cauth
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
-      - path: /shared
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
-      - path: /bower_components
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
-      - path: /node_modules
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
-      - path: /asset
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
-      - path: /swagger.yaml
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
-      - path: /ConfigModule.js
-        backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/permanent-redirect: "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/landing/"
-  name: {{ .Release.Name }}-root
-  namespace: {{ .Release.Namespace }}
-spec:
-  rules:
-  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
-    http:
-      paths:
-      - backend:
-          serviceName: {{ .Release.Name }}
-          servicePort: 80
-        path: /
-  tls:
-  - hosts:
-    - {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
-    secretName: {{ .Values.tls.secretName }}
 {{- if .Values.workbench.etcd_storage.persistent.type | default false }}
 ---
 apiVersion: v1
@@ -225,7 +109,7 @@ metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+    configHash: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -235,6 +119,8 @@ spec:
     metadata:
       labels:
         component: {{ .Release.Name }}
+      annotations:
+        configHash: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
     spec:
 {{ if .Values.rbac.enabled }}
       serviceAccountName: {{ .Release.Name }}
@@ -261,6 +147,10 @@ spec:
         - containerPort: 3000
           protocol: TCP
         env:
+          - name: CONFIG_HASH
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.annotations['configHash']
           - name: NDSLABS_APISERVER_SERVICE_PORT
             value: "30001"
           - name: DOMAIN
@@ -277,7 +167,7 @@ spec:
             valueFrom:
               configMapKeyRef:
                 name: {{ .Release.Name }}
-                key: tls.enable
+                key: workbench.tls.enable
           - name: SIGNIN_URL
             valueFrom:
               configMapKeyRef:
@@ -294,7 +184,11 @@ spec:
                 name: {{ .Release.Name }}
                 key: workbench.support_email
           - name: APISERVER_HOST
+{{ if .Values.workbench.subdomain_prefix }}
             value: "{{ .Values.workbench.subdomain_prefix }}.$(DOMAIN)"
+{{ else }}
+            value: "$(DOMAIN)"
+{{ end }}
           - name: NDSLABS_APISERVER_SERVICE_PORT
             value: "30001"
           - name: APISERVER_PATH
@@ -335,6 +229,21 @@ spec:
                 key: workbench.shared_storage.read_only
                 name: workbench
 {{ end }}
+          - name: WORKBENCH_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.name
+          - name: TLS_ISSUER
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.ingress.tls.issuer
+          - name: TLS_CLUSTER_ISSUER
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.ingress.tls.cluster_issuer
           - name: SUPPORT_EMAIL
             valueFrom:
               configMapKeyRef:
@@ -381,7 +290,11 @@ spec:
                 name: {{ .Release.Name }}
                 key: workbench.node_selector_value
           - name: CORS_ORIGIN_ADDR
+{{ if .Values.workbench.subdomain_prefix }}
             value: "https://{{ .Values.workbench.subdomain_prefix }}.$(DOMAIN)"
+{{ else }}
+            value: "https://$(DOMAIN)"
+{{ end }}
           - name: ETCD_ADDR
             value: "localhost:4001"
           - name: KUBERNETES_ADDR
