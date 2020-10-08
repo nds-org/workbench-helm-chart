@@ -6,7 +6,6 @@ metadata:
   namespace: {{ .Release.Namespace }}
   annotations:
     kubernetes.io/ingress.class: "nginx"
-{{ if .Values.certmgr.cluster_issuer }}    cert-manager.io/cluster-issuer: "{{ .Values.certmgr.cluster_issuer }}"{{ else if .Values.certmgr.issuer }}    cert-manager.io/issuer: "{{ .Values.certmgr.issuer }}"{{ end }}
 {{ if .Values.workbench.subdomain_prefix }}    nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/cauth/auth"
     nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/login/"
 {{ else }}    nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.workbench.domain }}/cauth/auth"
@@ -18,7 +17,6 @@ spec:
   - hosts:
     - {{ .Values.workbench.domain }}
     - '*.{{ .Values.workbench.domain }}'
-    secretName: {{ .Values.tls.secretName }}-auth
   rules:
 {{ if .Values.workbench.subdomain_prefix }}  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}{{ else }}  - host: {{ .Values.workbench.domain }}{{ end }}
     http:
@@ -45,7 +43,6 @@ metadata:
   namespace: {{ .Release.Namespace }}
   annotations:
     kubernetes.io/ingress.class: "nginx"
-{{ if .Values.certmgr.cluster_issuer }}    cert-manager.io/cluster-issuer: "{{ .Values.certmgr.cluster_issuer }}"{{ else if .Values.certmgr.issuer }}    cert-manager.io/issuer: "{{ .Values.certmgr.issuer }}"{{ end }}
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
@@ -53,7 +50,6 @@ spec:
   - hosts:
     - {{ .Values.workbench.domain }}
     - '*.{{ .Values.workbench.domain }}'
-    secretName: {{ .Values.tls.secretName }}-open
   rules:
 {{ if .Values.workbench.subdomain_prefix }}  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}{{ else }}  - host: {{ .Values.workbench.domain }}{{ end }}
     http:
@@ -163,4 +159,4 @@ spec:
   - hosts:
     - {{ .Values.workbench.domain }}
     - '*.{{ .Values.workbench.domain }}'
-    secretName: {{ .Values.tls.secretName }}-root
+    secretName: {{ .Values.tls.secretName }}
