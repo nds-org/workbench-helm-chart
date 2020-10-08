@@ -17,6 +17,7 @@ spec:
   - hosts:
     - {{ .Values.workbench.domain }}
     - '*.{{ .Values.workbench.domain }}'
+    secretName: {{ .Values.tls.secretName }}-auth
   rules:
 {{ if .Values.workbench.subdomain_prefix }}  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}{{ else }}  - host: {{ .Values.workbench.domain }}{{ end }}
     http:
