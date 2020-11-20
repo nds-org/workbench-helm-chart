@@ -19,8 +19,8 @@ workbench:
     repo: "https://github.com/nds-org/ndslabs-specs.git"
     branch: "master"
   images:
-    webui: "ndslabs/angular-ui:develop"
-    apiserver: "ndslabs/apiserver:develop"
+    webui: "ndslabs/angular-ui:1.2.0"
+    apiserver: "ndslabs/apiserver:1.2.0"
     etcd: "quay.io/coreos/etcd:v3.3"
     smtp: "namshi/smtp:latest"
   etcd_storage:
