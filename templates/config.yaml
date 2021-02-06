@@ -11,7 +11,6 @@ data:
   workbench.ingress.tls.enable: "true"
   workbench.ingress.tls.cluster_issuer: "{{ default "" .Values.certmgr.cluster_issuer }}"
   workbench.ingress.tls.issuer: "{{ default "" .Values.certmgr.issuer }}"
-  workbench.ingress.tls.namespace: "{{ default "" .Values.certmgr.namespace }}"
 
   # Customize this instance of Workbench
   workbench.subdomain_prefix: "{{ .Values.workbench.subdomain_prefix }}"
