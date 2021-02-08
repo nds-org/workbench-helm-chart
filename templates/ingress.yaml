@@ -9,7 +9,7 @@ metadata:
 {{ if .Values.oauth.enabled | default false }}
     nginx.ingress.kubernetes.io/auth-url: "{{ .Values.oauth.auth_url | default "https://$host/cauth/auth" }}"
     nginx.ingress.kubernetes.io/auth-signin: "{{ .Values.oauth.signin_url | default "https://$host/login/" }}"
-    nginx.ingress.kubernetes.io/auth-request-headers: "{{ .Values.oauth.auth_request_headers | default "x-auth-request-user, x-auth-request-email" }}"
+    nginx.ingress.kubernetes.io/auth-response-headers: "{{ .Values.oauth.auth_response_headers | default "x-auth-request-user, x-auth-request-email" }}"
 {{ else }}
     nginx.ingress.kubernetes.io/auth-url: "https://$host/cauth/auth"
     nginx.ingress.kubernetes.io/auth-signin: "https://$host/login/"
@@ -61,7 +61,7 @@ spec:
   - hosts:
     - {{ .Values.workbench.domain }}
     - '*.{{ .Values.workbench.domain }}'
-    secretName: ndslabs-tls
+    secretName: {{ .Values.tls.secretName }}
   rules:
 {{ if .Values.workbench.subdomain_prefix }}  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}{{ else }}  - host: {{ .Values.workbench.domain }}{{ end }}
     http:
