@@ -49,7 +49,7 @@ oauth:
   enabled: false
   signin_url: "https://$host/login/"
   auth_url: "https://$host/cauth/auth"
-  auth_request_headers: "x-auth-request-user, x-auth-request-email"
+  auth_response_headers: "x-auth-request-user, x-auth-request-email" # , x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
 
 certmgr:
   cluster_issuer: "acmedns-issuer"
