@@ -2,27 +2,18 @@
 A Helm chart for deploying [Labs Workbench](https://github.com/nds-org/ndslabs) on [Kubernetes](https://github.com/kubernetes/kubernetes).
 
 # Prerequisites
-* Kubernetes Cluster (either single or multi-node) with `kubectl` locally to talk to your cluster
-* Helm/Tiller installed in your cluster with `helm` client available locally
+You will need the following resources:
+* Kubernetes Cluster (either single or multi-node) with `kubectl` and `helm` (v3) to talk to your cluster
+* At least one Ingress controller installed in your cluster (preferrably NGINX Ingress controller)
+* At least one StorageClass / Volume Provisioner configured in your cluster
+* A valid wildcard TLS certificate for your desired domain (e.g. `*.mydomain.ndslabs.org`)
 
-For an extremely simple 3-step process for getting all of the above set-up, check out [Data8's kubeadm-bootstrap](https://github.com/data-8/kubeadm-bootstrap)
+For more information on getting these resources set up and configured, see [CLUSTER-SETUP.md].
 
-# Usage
+# Configuring the Helm Chart
 Clone this repo locally (somewhere with `kubectl` access and the `helm` client installed):
 ```bash
-ubuntu@lambert8-dev:~$ git clone https://github.com/nds-org/workbench-helm-chart && cd workbench-helm-chart/
-```
-
-Have a [valid/signed TLS certificate](https://letsencrypt.org/), or you can generate a self-signed certificate:
-```bash
-ubuntu@lambert8-dev:~/workbench-helm-chart$ ./generate-self-signed-cert.sh example.com
-
-Generating self-signed certificate for example.com
-Generating a 2048 bit RSA private key
-........................................................................................................................................+++
-........+++
-writing new private key to 'certs/example.com.key'
------
+$ git clone https://github.com/nds-org/workbench-helm-chart && cd workbench-helm-chart/
 ```
 
 Tweak the parameters in `values.yaml`:
@@ -31,9 +22,8 @@ vi values.yaml
 ```
 
 * NOTE 1: Be sure to set correct values for your `domain` and `support_email` in `values.yaml`.
-* NOTE 2: Be sure to copy and paste the contents of your TLS cert/key into the appropriate variables in `values.yaml`.
-* NOTE 3: If you are using Kubernetes >= 1.8, you will likely need to enable RBAC in `values.yaml`.
-* NOTE 4: If you do not specify an SMTP configurations, some environments may allow you to fall back to the default SMTP server (e.g. Nebula, SDSC, etc).
+* NOTE 2: If you are using Kubernetes >= 1.8, you will need to enable RBAC in `values.yaml`.
+* NOTE 3: Some environments may allow you to fall back to the default SMTP server (e.g. Nebula, SDSC, etc) if an SMTP configuration is not provided. (GMail tends to be the most reliable, and allows for 100 emails per-day)
 
 Deploy the helm chart:
 ```bash
@@ -91,10 +81,14 @@ You should see output like that above indicating that Labs Workbench is starting
 # Checking Status
 You can run `helm list` to view the status of your Helm deployment:
 ```bash
-ubuntu@lambert8-dev:~/workbench-helm-chart$ helm list
+$ helm list
 NAME            	REVISION	UPDATED                 	STATUS  	CHART          	NAMESPACE
 workbench		1       	Sat Jun 30 04:39:35 2018	DEPLOYED	workbench-1.1.0	workbench
-support         	1       	Fri Jun 29 22:29:34 2018	DEPLOYED	support-0.1.0  	support  
+```
+
+To see the running Pods from your Helm installation:
+```bash
+$ kubectl get pods
 ```
 
 # Modifying your Parameters
@@ -102,54 +96,7 @@ If you need to change your instance parameters, simply modify `values.yaml` and 
 
 The `<release-name>` can be discovered using the `helm list` command, shown above. You can override this by passing `--name=<release-name>` to `helm install`
 
-This will perform a rolling upgrade on your chart's resources to use the newest values:
-```bash
-ubuntu@lambert8-dev:~/workbench-helm-chart$ helm upgrade workbench .
-Release "workbench" has been upgraded. Happy Helming!
-LAST DEPLOYED: Sat Jun 30 04:39:35 2018
-NAMESPACE: workbench
-STATUS: DEPLOYED
-
-RESOURCES:
-==> v1/Namespace
-NAME       STATUS  AGE
-workbench  Active  4h
-
-==> v1beta1/Deployment
-NAME               DESIRED  CURRENT  UP-TO-DATE  AVAILABLE  AGE
-ndslabs-workbench  1        0        0           0          4h
-
-==> v1beta1/Ingress
-NAME                    HOSTS                  ADDRESS  PORTS  AGE
-ndslabs-workbench-open  www.mldev.ndslabs.org  80, 443  4h
-ndslabs-workbench-auth  www.mldev.ndslabs.org  80, 443  4h
-
-==> v1/Secret
-NAME                TYPE    DATA  AGE
-ndslabs-tls-secret  Opaque  2     4h
-
-==> v1/ConfigMap
-NAME               DATA  AGE
-ndslabs-workbench  24    4h
-
-==> v1/ServiceAccount
-NAME               SECRETS  AGE
-ndslabs-workbench  1        0s
-
-==> v1/ClusterRole
-NAME               AGE
-ndslabs-workbench  10m
-
-==> v1/ClusterRoleBinding
-NAME               AGE
-ndslabs-workbench  10m
-
-==> v1/Service
-NAME               TYPE       CLUSTER-IP    EXTERNAL-IP  PORT(S)                  AGE
-ndslabs-workbench  ClusterIP  10.109.18.61  <none>       80/TCP,30001/TCP,25/TCP  4h
-
-
-```
+This will perform a rolling upgrade on your chart's resources to use the newest values.
 
 # Shutting it Down
 To clean up all resources used by Labs Workbench, simply run `helm delete <release-name>`
@@ -165,6 +112,7 @@ release "workbench" deleted
 NOTE: This does not currently clean up or delete any user namespace or deployments.
 
 # TODO
+* Does nginx-ingress need special config for `default-ssl-cert`?
 * Improve hosting/workflow - user should not have to clone this repo to install via Helm
 * NFS / PVC vs hostPath option?
 * OAuth vs custom auth option?
