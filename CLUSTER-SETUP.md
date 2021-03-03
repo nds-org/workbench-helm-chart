@@ -10,7 +10,7 @@ You will need a Kubernetes Cluster (either single or multi-node) with `kubectl` 
 
 ### Running locally (developer only)
 Several options exist for running a Kubernetes cluster locally:
-* `Kubernetes under Docker for MacOSX/Windows - you can enable Kubernetes in the Settings and install the `helm` client
+* Kubernetes under Docker for MacOSX/Windows - you can enable Kubernetes in the Settings and install the `helm` client
 * `minikube` - you will need to set up a custom domain pointing to your `minikube ip`
 
 ### Remote VM Single-node
