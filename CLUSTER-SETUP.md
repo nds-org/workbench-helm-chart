@@ -17,8 +17,13 @@ Several options exist for running a Kubernetes cluster locally:
 For a short 3-step process for setting this up on a remote VM (where `minikube` may be unavailable), check out [our fork of Data8's kubeadm-bootstrap](https://github.com/nds-org/kubeadm-bootstrap)
 This will install Kubernetes via `kubeadm` and configure it to run as a single node cluster. It will also deploy the NGINX Ingress controller to the cluster, allowing you to skip the steps for deploying it manually (provided below).
 
-### Remote VM Multi-node
-For a more robust Workbench cluster the spans multiple OpenStack VMs, you can use our [kubeadm-terraform](https://github.com/nds-org/kubeadm-terraform) plan to spin up a cluster of your desired size and scale. 
+#### Manually Scaling Up Additional Nodes
+Once the script has finished running, it should output instructions for how to join more nodes to this cluster.
+
+To manually add a node to the cluster, copy and paste the `kubeadm join ..... ` command from your first node's console to another kubeadm-enabled VM and kubeadm will set up that VM as a worker node in your cluster. 
+
+### Remote VM Multi-node via Terraform
+For a more robust Workbench cluster the spans multiple OpenStack VMs, you can use our [kubeadm-terraform](https://github.com/nds-org/kubeadm-terraform) plan to spin up a cluster of your desired size and scale.
 
 ## StorageClass / Volume Provisioner
 At least one StorageClass needs to be configured in your cluster as the default.
