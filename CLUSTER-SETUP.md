@@ -52,15 +52,21 @@ $ kubectl apply -f https://raw.githubusercontent.com/nds-org/kubeadm-terraform/m
 $ kubectl apply -f https://raw.githubusercontent.com/nds-org/kubeadm-terraform/master/assets/nfs/deployment.yaml
 ```
 
-This will run the NFS Server Provisioner on all nodes that have a label matching `external-storage=true`.
+This will run the NFS Server Provisioner on all nodes that have a label matching `external-storage=true`. To use this provisioner, you will need to manually label at least one node with a persistent disk attached.
 
 To apply this label to a node, run the following command:
 ```
 $ kubectl label NODENAME external-storage=true
 ```
 
-This will also create an empty test PersistentVolumeClaim (PVC) in your cluster. Once the NFS server comes online, the provisioner will create a PV for any PVCs that are requested. Once provisioned, `kubectl get pvc` should tell you that the `STATUS` of the PVC will change to `Bound`.
+After the NFS provisioner comes online, the provisioner will create a PV for any PVCs that are requested.
 
+You can test that it's working by creating a test PVC:
+```bash
+$ kubectl apply -f https://raw.githubusercontent.com/nds-org/kubeadm-terraform/master/assets/nfs/test.pvc.yaml
+```
+
+This will create an empty `test` PersistentVolumeClaim (PVC) in your cluster, which the provisioner will see and bind a PersistentVolume to the claim.  Once provisioned, `kubectl get pvc` should tell you that the `STATUS` of the PVC will change to `Bound`.
 
 ## Wildcard TLS Secret
 You will need a valid wildcard TLS certificate for your chosen Workbench domain. If you have already created a valid wildcard TLS secret, skip this step.
