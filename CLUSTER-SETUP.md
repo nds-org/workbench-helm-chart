@@ -45,9 +45,18 @@ If you do not see *any* StorageClass listed, then you'll need to set one up firs
 
 While there are many volume provisioners available, we tend to use the [NFS Server Provisioner](https://github.com/nds-org/kubeadm-terraform/tree/develop/assets/nfs) to provision volumes for Workbench.
 
-To use the NFS Server Provisioner in your cluster, run the following command:
+To use the NFS Server Provisioner in your cluster, run the following commands:
 ```bash
-$ kubectl apply -f https://github.com/nds-org/kubeadm-terraform/tree/develop/assets/nfs
+$ kubectl apply -f https://raw.githubusercontent.com/nds-org/kubeadm-terraform/master/assets/nfs/storageclass.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/nds-org/kubeadm-terraform/master/assets/nfs/rbac.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/nds-org/kubeadm-terraform/master/assets/nfs/deployment.yaml
+```
+
+This will run the NFS Server Provisioner on all nodes that have a label matching `external-storage=true`.
+
+To apply this label to a node, run the following command:
+```
+$ kubectl label NODENAME external-storage=true
 ```
 
 This will also create an empty test PersistentVolumeClaim (PVC) in your cluster. Once the NFS server comes online, the provisioner will create a PV for any PVCs that are requested. Once provisioned, `kubectl get pvc` should tell you that the `STATUS` of the PVC will change to `Bound`.
@@ -58,9 +67,9 @@ You will need a valid wildcard TLS certificate for your chosen Workbench domain.
 
 If you already have valid certificate and private key files for your wildcard domain, then you can create a secret from them using the following command:
 ```bash
-kubectl create secret tls --namespace=default ndslabs-tls \
-  --cert=path/to/cert/file \
-  --key=path/to/key/file
+$ kubectl create secret tls --namespace=default ndslabs-tls \
+    --cert=path/to/cert/file \
+    --key=path/to/key/file
 ```
 
 Once you have the secret, you will need to tell NGINX to use that as the default TLS certificate (see below).
@@ -77,14 +86,14 @@ NOTE: If your DNS provider does not allow for programmatic DNS updates (e.g. Goo
 
 To deploy the NGINX Ingress controller, use the following commands:
 ```bash
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm repo update
-helm upgrade --install ingress ingress-nginx/ingress-nginx -n kube-system --set controller.hostPort.enabled=true --set controller.kind=Deployment --set controller.extraArgs.default-ssl-certificate=default/ndslabs-tls
+$ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+$ helm repo update
+$ helm upgrade --install ingress ingress-nginx/ingress-nginx -n kube-system --set controller.hostPort.enabled=true --set controller.kind=Deployment --set controller.extraArgs.default-ssl-certificate=default/ndslabs-tls
 ```
 
 Finally, you will need to point the NGINX Ingress controller at this secret to use it across multiple namespaces:
 ```bash
-  helm upgrade <RELEASE_NAME> --namespace <RELEASE_NAMESPACE> --reuse-values --set controller.extraArgs.default-ssl-certificate=default/ndslabs-tls
+$ helm upgrade <RELEASE_NAME> --namespace <RELEASE_NAMESPACE> --reuse-values --set controller.extraArgs.default-ssl-certificate=default/ndslabs-tls
 ```
 
 
