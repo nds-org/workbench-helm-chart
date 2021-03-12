@@ -23,7 +23,11 @@ spec:
     - '*.{{ .Values.workbench.domain }}'
     secretName: {{ .Values.tls.secretName }}
   rules:
-{{ if .Values.workbench.subdomain_prefix }}  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}{{ else }}  - host: {{ .Values.workbench.domain }}{{ end }}
+{{ if .Values.workbench.subdomain_prefix }}
+  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
+{{ else }}
+  - host: {{ .Values.workbench.domain }}
+{{ end }}
     http:
       paths:
       - path: /logs
@@ -48,11 +52,6 @@ metadata:
   namespace: {{ .Release.Namespace }}
   annotations:
     kubernetes.io/ingress.class: "nginx"
-#{{ if .Values.certmgr.cluster_issuer }}
-    cert-manager.io/cluster-issuer: "{{ .Values.certmgr.cluster_issuer }}"
-{{ else if .Values.certmgr.issuer }}
-    cert-manager.io/issuer: "{{ .Values.certmgr.issuer }}"
-{{ end }}
     nginx.ingress.kubernetes.io/app-root: "/landing/"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
@@ -63,7 +62,11 @@ spec:
     - '*.{{ .Values.workbench.domain }}'
     secretName: {{ .Values.tls.secretName }}
   rules:
-{{ if .Values.workbench.subdomain_prefix }}  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}{{ else }}  - host: {{ .Values.workbench.domain }}{{ end }}
+{{ if .Values.workbench.subdomain_prefix }}
+  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
+{{ else }}
+  - host: {{ .Values.workbench.domain }}
+{{ end }}
     http:
       paths:
       - path: /api/
@@ -122,3 +125,44 @@ spec:
             name: {{ .Release.Name }}
             port: 
               number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+{{ if .Values.certmgr.cluster_issuer }}
+    cert-manager.io/cluster-issuer: "{{ .Values.certmgr.cluster_issuer }}"
+{{ else if .Values.certmgr.issuer }}
+    cert-manager.io/issuer: "{{ .Values.certmgr.issuer }}"
+{{ end }}
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+{{ if .Values.workbench.subdomain_prefix }}
+    nginx.ingress.kubernetes.io/permanent-redirect: "https://{{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}/landing/"
+{{ else }}
+    nginx.ingress.kubernetes.io/permanent-redirect: "https://{{ .Values.workbench.domain }}/landing/"
+{{ end }}
+  name: {{ .Release.Name }}-root
+  namespace: {{ .Release.Namespace }}
+spec:
+  rules:
+{{ if .Values.workbench.subdomain_prefix }}
+  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
+{{ else }}
+  - host: {{ .Values.workbench.domain }}
+{{ end }}
+    http:
+      paths:
+      - backend:
+          service:
+            name: {{ .Release.Name }}
+            port: 
+              number: 80
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - {{ .Values.workbench.domain }}
+    - '*.{{ .Values.workbench.domain }}'
+    secretName: {{ .Values.tls.secretName }}
