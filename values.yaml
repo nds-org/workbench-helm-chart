@@ -45,16 +45,15 @@ workbench:
   timeout: 30
   inactivity_timeout: 480
 
-# FIXME: This has not been tested
 oauth:
   enabled: false
-  signin_url: ""
-  auth_url: ""
+  signin_url: "https://$host/login/"
+  auth_url: "https://$host/cauth/auth"
+  auth_response_headers: "x-auth-request-user, x-auth-request-email" # , x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
 
 certmgr:
   cluster_issuer: "acmedns-issuer"
   issuer: ""
-  namespace: ""
 
 rbac:
   enabled: true
