@@ -55,11 +55,6 @@ spec:
     - port: 30001
       name: api
       protocol: TCP
-{{ if .Values.oauth.enabled | default false }}
-    - port: 30002
-      name: admin
-      protocol: TCP
-{{ end }}
     - name: smtp
       port: 25
       protocol: TCP
