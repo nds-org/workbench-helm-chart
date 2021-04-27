@@ -16,6 +16,8 @@ data:
   workbench.subdomain_prefix: "{{ .Values.workbench.subdomain_prefix }}"
   workbench.domain: "{{ .Values.workbench.domain }}"
   workbench.name: "{{ .Values.workbench.name }}"
+  workbench.landing_html: | 
+    {{ .Values.workbench.landing_html | quote}}
   workbench.support_email: "{{ .Values.workbench.support_email }}"
   workbench.analytics_tracking_id: "{{ .Values.workbench.analytics_tracking_id }}"
   workbench.node_selector_name: "{{ .Values.workbench.node_selector_name }}"

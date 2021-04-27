@@ -111,6 +111,8 @@ metadata:
   annotations:
     configHash: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
 spec:
+  strategy:
+    type: "{{ .Values.workbench.strategyType | default "RollingUpdate" }}"
   replicas: 1
   selector:
     matchLabels:
@@ -189,10 +191,37 @@ spec:
 {{ else }}
             value: "$(DOMAIN)"
 {{ end }}
-          - name: NDSLABS_APISERVER_SERVICE_PORT
-            value: "30001"
+          - name: PRODUCT_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.product_name
+          - name: PRODUCT_LANDING_HTML
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.product_landing_html
           - name: APISERVER_PATH
             value: "/api"
+          - name: SHOW_CONFIG
+            value: "{{ .Values.workbench.advanced_features.show_config | default true }}"
+          - name: SHOW_LOGS
+            value: "{{ .Values.workbench.advanced_features.show_logs | default true }}"
+          - name: SHOW_CONSOLE
+            value: "{{ .Values.workbench.advanced_features.show_console | default true }}"
+          - name: SHOW_REMOVE_SERVICE
+            value: "{{ .Values.workbench.advanced_features.show_remove_service | default true }}"
+          - name: SHOW_EDIT_SERVICE
+            value: "{{ .Values.workbench.advanced_features.show_edit_service | default true }}"
+          - name: SHOW_SERVICE_HELP_ICON
+            value: "{{ .Values.workbench.advanced_features.show_service_help_icon | default true }}"
+          - name: SHOW_CREATE_SPEC
+            value: "{{ .Values.workbench.advanced_features.show_create_spec | default true }}"
+          - name: SHOW_IMPORT_SPEC
+            value: "{{ .Values.workbench.advanced_features.show_import_spec | default true }}"
+          - name: SHOW_FILE_MANAGER
+            value: "{{ .Values.workbench.advanced_features.show_file_manager | default true }}"
+
         readinessProbe:
           httpGet:
             path: /asset/png/favicon-2-32x32.png
