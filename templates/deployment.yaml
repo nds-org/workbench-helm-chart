@@ -195,7 +195,7 @@ spec:
             valueFrom:
               configMapKeyRef:
                 name: {{ .Release.Name }}
-                key: workbench.product_name
+                key: workbench.name
           - name: PRODUCT_LANDING_HTML
             valueFrom:
               configMapKeyRef:
