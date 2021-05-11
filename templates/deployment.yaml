@@ -191,16 +191,26 @@ spec:
 {{ else }}
             value: "$(DOMAIN)"
 {{ end }}
-          - name: PRODUCT_NAME
+          - name: WORKBENCH_NAME
             valueFrom:
               configMapKeyRef:
                 name: {{ .Release.Name }}
                 key: workbench.name
-          - name: PRODUCT_LANDING_HTML
+          - name: WORKBENCH_LANDING_HTML
             valueFrom:
               configMapKeyRef:
                 name: {{ .Release.Name }}
-                key: workbench.product_landing_html
+                key: workbench.landing_html
+          - name: WORKBENCH_BRAND_LOGO
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.brand_logo_path
+          - name: WORKBENCH_FAVICON_PATH
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.favicon_path
           - name: APISERVER_PATH
             value: "/api"
           - name: SHOW_CONFIG
