@@ -10,6 +10,8 @@ workbench:
   landing_html: | 
     <p>Labs Workbench is an environment where developers can prototype tools and capabilities that help build out the NDS framework and services.</p>
     <p>In particular, it is a place that can host the development activities of <a href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects.</a></p>
+  brand_logo_path: "../asset/png/favicon-32x32.png"
+  favicon_path: "../asset/png/favicon-16x16.png"
   domain: "local.ndslabs.org"
   subdomain_prefix: "www"
   volume_name: "global"
