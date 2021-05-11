@@ -201,7 +201,7 @@ spec:
               configMapKeyRef:
                 name: {{ .Release.Name }}
                 key: workbench.landing_html
-          - name: WORKBENCH_BRAND_LOGO
+          - name: WORKBENCH_BRAND_LOGO_PATH
             valueFrom:
               configMapKeyRef:
                 name: {{ .Release.Name }}
