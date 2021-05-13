@@ -20,6 +20,7 @@ data:
     {{ .Values.workbench.landing_html | quote }}
   workbench.brand_logo_path: {{ .Values.workbench.brand_logo_path | quote }}
   workbench.favicon_path: {{ .Values.workbench.favicon_path | quote }}
+  workbench.learn_more_url: {{ .Values.workbench.learn_more_url | quote }}
   workbench.support_email: "{{ .Values.workbench.support_email }}"
   workbench.analytics_tracking_id: "{{ .Values.workbench.analytics_tracking_id }}"
   workbench.node_selector_name: "{{ .Values.workbench.node_selector_name }}"
