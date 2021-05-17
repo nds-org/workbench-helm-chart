@@ -15,9 +15,20 @@ data:
   # Customize this instance of Workbench
   workbench.subdomain_prefix: "{{ .Values.workbench.subdomain_prefix }}"
   workbench.domain: "{{ .Values.workbench.domain }}"
+  workbench.cookie_domain: "{{ .Values.workbench.domain }}"
+
+  workbench.advanced_features.show_config: "{{ .Values.workbench.advanced_features.show_config }}"
+  workbench.advanced_features.show_logs: "{{ .Values.workbench.advanced_features.show_logs }}"
+  workbench.advanced_features.show_console: "{{ .Values.workbench.advanced_features.show_console }}"
+  workbench.advanced_features.show_service_help_icon: "{{ .Values.workbench.advanced_features.show_service_help_icon }}"
+  workbench.advanced_features.show_edit_service: "{{ .Values.workbench.advanced_features.show_edit_service }}"
+  workbench.advanced_features.show_remove_service: "{{ .Values.workbench.advanced_features.show_remove_service }}"
+  workbench.advanced_features.show_create_spec: "{{ .Values.workbench.advanced_features.show_create_spec }}"
+  workbench.advanced_features.show_import_spec: "{{ .Values.workbench.advanced_features.show_import_spec }}"
+  workbench.advanced_features.show_file_manager: "{{ .Values.workbench.advanced_features.show_file_manager }}"
+
   workbench.name: "{{ .Values.workbench.name }}"
-  workbench.landing_html: | 
-    {{ .Values.workbench.landing_html | quote }}
+  workbench.landing_html: {{ .Values.workbench.landing_html | quote }}
   workbench.brand_logo_path: {{ .Values.workbench.brand_logo_path | quote }}
   workbench.favicon_path: {{ .Values.workbench.favicon_path | quote }}
   workbench.learn_more_url: {{ .Values.workbench.learn_more_url | quote }}
