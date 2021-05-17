@@ -132,6 +132,13 @@ spec:
             name: {{ .Release.Name }}
             port: 
               number: 80
+      - path: /env.json
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}
+            port: 
+              number: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -154,11 +161,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   rules:
-{{ if .Values.workbench.subdomain_prefix }}
-  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
-{{ else }}
   - host: {{ .Values.workbench.domain }}
-{{ end }}
     http:
       paths:
       - backend:
@@ -168,6 +171,18 @@ spec:
               number: 80
         path: /
         pathType: Prefix
+{{ if .Values.workbench.subdomain_prefix }}
+  - host: {{ .Values.workbench.subdomain_prefix }}.{{ .Values.workbench.domain }}
+    http:
+      paths:
+      - backend:
+          service:
+            name: {{ .Release.Name }}
+            port: 
+              number: 80
+        path: /
+        pathType: Prefix
+{{ end }}
   tls:
   - hosts:
     - {{ .Values.workbench.domain }}
