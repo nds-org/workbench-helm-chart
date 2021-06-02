@@ -111,6 +111,8 @@ metadata:
   annotations:
     configHash: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
 spec:
+  strategy:
+    type: "{{ .Values.workbench.strategyType | default "RollingUpdate" }}"
   replicas: 1
   selector:
     matchLabels:
@@ -158,6 +160,11 @@ spec:
               configMapKeyRef:
                 name: {{ .Release.Name }}
                 key: workbench.domain
+          - name: COOKIEDOMAIN
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.cookie_domain
           - name: SUBDOMAIN_PREFIX
             valueFrom:
               configMapKeyRef:
@@ -189,10 +196,79 @@ spec:
 {{ else }}
             value: "$(DOMAIN)"
 {{ end }}
-          - name: NDSLABS_APISERVER_SERVICE_PORT
-            value: "30001"
+          - name: WORKBENCH_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.name
+          - name: WORKBENCH_LANDING_HTML
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.landing_html
+          - name: WORKBENCH_BRAND_LOGO_PATH
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.brand_logo_path
+          - name: WORKBENCH_FAVICON_PATH
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.favicon_path
+          - name: WORKBENCH_LEARNMORE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.learn_more_url
           - name: APISERVER_PATH
             value: "/api"
+          - name: SHOW_CONFIG
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_config
+          - name: SHOW_LOGS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_logs
+          - name: SHOW_CONSOLE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_console
+          - name: SHOW_REMOVE_SERVICE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_remove_service
+          - name: SHOW_EDIT_SERVICE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_edit_service
+          - name: SHOW_SERVICE_HELP_ICON
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_service_help_icon
+          - name: SHOW_CREATE_SPEC
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_create_spec
+          - name: SHOW_IMPORT_SPEC
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_import_spec
+          - name: SHOW_FILE_MANAGER
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_file_manager
+
         readinessProbe:
           httpGet:
             path: /asset/png/favicon-2-32x32.png
