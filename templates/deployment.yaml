@@ -221,6 +221,11 @@ spec:
               configMapKeyRef:
                 name: {{ .Release.Name }}
                 key: workbench.learn_more_url
+          - name: WORKBENCH_HELP_LINKS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.help_links
           - name: APISERVER_PATH
             value: "/api"
           - name: SHOW_CONFIG
