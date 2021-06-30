@@ -160,6 +160,11 @@ spec:
               configMapKeyRef:
                 name: {{ .Release.Name }}
                 key: workbench.domain
+          - name: COOKIEDOMAIN
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.cookie_domain
           - name: SUBDOMAIN_PREFIX
             valueFrom:
               configMapKeyRef:
@@ -191,36 +196,83 @@ spec:
 {{ else }}
             value: "$(DOMAIN)"
 {{ end }}
-          - name: PRODUCT_NAME
+          - name: WORKBENCH_NAME
             valueFrom:
               configMapKeyRef:
                 name: {{ .Release.Name }}
                 key: workbench.name
-          - name: PRODUCT_LANDING_HTML
+          - name: WORKBENCH_LANDING_HTML
             valueFrom:
               configMapKeyRef:
                 name: {{ .Release.Name }}
-                key: workbench.product_landing_html
+                key: workbench.landing_html
+          - name: WORKBENCH_BRAND_LOGO_PATH
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.brand_logo_path
+          - name: WORKBENCH_FAVICON_PATH
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.favicon_path
+          - name: WORKBENCH_LEARNMORE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.learn_more_url
+          - name: WORKBENCH_HELP_LINKS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.help_links
           - name: APISERVER_PATH
             value: "/api"
           - name: SHOW_CONFIG
-            value: "{{ .Values.workbench.advanced_features.show_config | default true }}"
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_config
           - name: SHOW_LOGS
-            value: "{{ .Values.workbench.advanced_features.show_logs | default true }}"
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_logs
           - name: SHOW_CONSOLE
-            value: "{{ .Values.workbench.advanced_features.show_console | default true }}"
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_console
           - name: SHOW_REMOVE_SERVICE
-            value: "{{ .Values.workbench.advanced_features.show_remove_service | default true }}"
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_remove_service
           - name: SHOW_EDIT_SERVICE
-            value: "{{ .Values.workbench.advanced_features.show_edit_service | default true }}"
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_edit_service
           - name: SHOW_SERVICE_HELP_ICON
-            value: "{{ .Values.workbench.advanced_features.show_service_help_icon | default true }}"
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_service_help_icon
           - name: SHOW_CREATE_SPEC
-            value: "{{ .Values.workbench.advanced_features.show_create_spec | default true }}"
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_create_spec
           - name: SHOW_IMPORT_SPEC
-            value: "{{ .Values.workbench.advanced_features.show_import_spec | default true }}"
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_import_spec
           - name: SHOW_FILE_MANAGER
-            value: "{{ .Values.workbench.advanced_features.show_file_manager | default true }}"
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}
+                key: workbench.advanced_features.show_file_manager
 
         readinessProbe:
           httpGet:
