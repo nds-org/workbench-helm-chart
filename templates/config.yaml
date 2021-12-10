@@ -4,13 +4,6 @@ metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 data:
-  frontend.json: |
-    {{ .Values.frontend | toJson }}
-  backend.json: |
-    {{ .Values.backend | toJson }}
-
-
-  ### DEPRECATED: 
 
   # Enable TLS (HTTPS)?
   workbench.tls.enable: "true"
