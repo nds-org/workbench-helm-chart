@@ -283,6 +283,16 @@ spec:
           timeoutSeconds: 120
 
       - name: apiserver
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /api/healthz
+            port: 30001
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 1
         image: {{ required "Must specify an image for ndslabs-apiserver" .Values.workbench.images.apiserver }}
         imagePullPolicy: Always
         securityContext:
