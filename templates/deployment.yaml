@@ -298,17 +298,17 @@ spec:
             valueFrom:
               configMapKeyRef:
                 key: workbench.shared_storage.volume_path
-                name: workbench
+                name: {{ .Release.Name }}
           - name: SHARED_VOLUME_NAME
             valueFrom:
               configMapKeyRef:
                 key: workbench.shared_storage.volume_name
-                name: workbench
+                name: {{ .Release.Name }}
           - name: SHARED_VOLUME_READ_ONLY
             valueFrom:
               configMapKeyRef:
                 key: workbench.shared_storage.read_only
-                name: workbench
+                name: {{ .Release.Name }}
 {{ end }}
           - name: WORKBENCH_NAME
             valueFrom:
