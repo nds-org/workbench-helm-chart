@@ -5,7 +5,9 @@ metadata:
   name: {{ .Release.Name }}-auth
   namespace: {{ .Release.Namespace }}
   annotations:
+{{ if .Values.workbench.ingress_class }}
     kubernetes.io/ingress.class: {{ .Values.workbench.ingress_class | quote }}
+{{ end }}
 {{ if .Values.oauth.enabled | default false }}
     nginx.ingress.kubernetes.io/auth-url: "{{ .Values.oauth.auth_url | default "https://$host/cauth/auth" }}"
     nginx.ingress.kubernetes.io/auth-signin: "{{ .Values.oauth.signin_url | default "https://$host/login/" }}"
@@ -51,7 +53,9 @@ metadata:
   name: {{ .Release.Name }}-open
   namespace: {{ .Release.Namespace }}
   annotations:
+{{ if .Values.workbench.ingress_class }}
     kubernetes.io/ingress.class: {{ .Values.workbench.ingress_class | quote }}
+{{ end }}
     nginx.ingress.kubernetes.io/app-root: "/landing/"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
@@ -144,7 +148,9 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
+{{ if .Values.workbench.ingress_class }}
     kubernetes.io/ingress.class: {{ .Values.workbench.ingress_class | quote }}
+{{ end }}
 {{ if .Values.certmgr.cluster_issuer }}
     cert-manager.io/cluster-issuer: "{{ .Values.certmgr.cluster_issuer }}"
 {{ else if .Values.certmgr.issuer }}
@@ -199,7 +205,9 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
+{{ if .Values.workbench.ingress_class }}
     kubernetes.io/ingress.class: {{ .Values.workbench.ingress_class | quote }}
+{{ end }}
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 
