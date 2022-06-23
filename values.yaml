@@ -16,21 +16,21 @@ frontend:
     brand_logo_path: "/favicon.svg"
     learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
     help_links:
-      - icon": "fa-info-circle",
-        name": "Feature Overview",
-        url": "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview"
-      - icon": "fa-question-circle",
-        name": "FAQ",
-        url": "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions"
-      - icon": "fa-book",
-        name": "User's Guide",
-        url": "https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide"
-      - icon": "fa-code-fork",
-        name": "Developer's Guide",
-        url": "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide"
-      - icon": "fa-gavel",
-        name": "Acceptable Use Policy",
-        url": "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy"
+      - icon: "fa-info-circle"
+        name: "Feature Overview"
+        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview"
+      - icon: "fa-question-circle"
+        name: "FAQ"
+        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions"
+      - icon: "fa-book"
+        name: "User's Guide"
+        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide"
+      - icon: "fa-code-fork"
+        name: "Developer's Guide"
+        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide"
+      - icon: "fa-gavel"
+        name: "Acceptable Use Policy"
+        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy"
 
 backend:
   timeout: 30
@@ -120,9 +120,10 @@ workbench:
     enabled: false
     uisrc: ""
   name: "Labs Workbench"
-  landing_html: | 
+  landing_html: >-
     <p>Labs Workbench is an environment where developers can prototype tools and capabilities that help build out the NDS framework and services.</p>
     <p>In particular, it is a place that can host the development activities of <a href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects.</a></p>
+  ingress_class: "nginx"
   brand_logo_path: "../asset/png/favicon-32x32.png"
   favicon_path: "../asset/png/favicon-16x16.png"
   learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
