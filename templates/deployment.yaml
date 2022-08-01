@@ -153,6 +153,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.annotations['configHash']
+          - name: NDSLABS_APISERVER_SERVICE_HOST
+            value: localhost
           - name: NDSLABS_APISERVER_SERVICE_PORT
             value: "30001"
           - name: DOMAIN
