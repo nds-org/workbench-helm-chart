@@ -127,7 +127,7 @@ workbench:
   brand_logo_path: "../asset/png/favicon-32x32.png"
   favicon_path: "../asset/png/favicon-16x16.png"
   learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
-  help_links: "[{ \"name\": \"Feature Overview\", \"icon\": \"fa-info-circle\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview\" },{ \"name\": \"F.A.Q.\", \"icon\": \"fa-question-circle\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions\"}, { \"name\": \"User's Guide\",           icon: \"fa-book\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide\" }, { \"name\": \"Developer's Guide\", \"icon\": \"fa-code-fork\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide\" },{ \"name\": \"Acceptable Use Policy\",  \"icon\": \"fa-gavel\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy\" }]"
+  help_links: "[{ \"name\": \"Feature Overview\", \"icon\": \"fa-info-circle\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview\" },{ \"name\": \"F.A.Q.\", \"icon\": \"fa-question-circle\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions\"}, { \"name\": \"User's Guide\", \"icon\": \"fa-book\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide\" }, { \"name\": \"Developer's Guide\", \"icon\": \"fa-code-fork\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide\" },{ \"name\": \"Acceptable Use Policy\",  \"icon\": \"fa-gavel\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy\" }]"
   domain: "local.ndslabs.org"
   subdomain_prefix: "www"
   volume_name: "global"
@@ -136,7 +136,7 @@ workbench:
   support_email: "ndslabs-support@nationaldataservice.org"
   analytics_tracking_id: ""
   require_account_approval: true
-  strategyType: "RollingUpdate"
+  strategyType: "RollingUpdate"       # or "Recreate" if using RWO data volume
   specs:
     repo: "https://github.com/nds-org/ndslabs-specs.git"
     branch: "master"
