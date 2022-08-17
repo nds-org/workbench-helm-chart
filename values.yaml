@@ -2,6 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# V2
 frontend:
   domain: "workbench.ndslabs.org"
   subdomain_prefix: "www"
@@ -15,21 +16,21 @@ frontend:
     brand_logo_path: "/favicon.svg"
     learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
     help_links:
-      - icon": "fa-info-circle",
-        name": "Feature Overview",
-        url": "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview"
-      - icon": "fa-question-circle",
-        name": "FAQ",
-        url": "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions"
-      - icon": "fa-book",
-        name": "User's Guide",
-        url": "https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide"
-      - icon": "fa-code-fork",
-        name": "Developer's Guide",
-        url": "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide"
-      - icon": "fa-gavel",
-        name": "Acceptable Use Policy",
-        url": "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy"
+      - icon: "fa-info-circle"
+        name: "Feature Overview"
+        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview"
+      - icon: "fa-question-circle"
+        name: "FAQ"
+        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions"
+      - icon: "fa-book"
+        name: "User's Guide"
+        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide"
+      - icon: "fa-code-fork"
+        name: "Developer's Guide"
+        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide"
+      - icon: "fa-gavel"
+        name: "Acceptable Use Policy"
+        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy"
 
 backend:
   timeout: 30
@@ -62,8 +63,8 @@ controller:
     app: workbench
   images:
     etcd: "quay.io/coreos/etcd:v3.3"
-    webui: "ndslabs/webui:react"
-    apiserver: "ndslabs/apiserver:cddr"
+    webui: "ndslabs/angular-ui:1.3.2"
+    apiserver: "ndslabs/apiserver:1.3.2"
   strategy_type: "RollingUpdate"
 
 ingress:
@@ -111,7 +112,7 @@ affinity: {}
 
 
 
-#### LEGACY
+#### V1
 
 
 workbench:
@@ -119,13 +120,14 @@ workbench:
     enabled: false
     uisrc: ""
   name: "Labs Workbench"
-  landing_html: | 
+  landing_html: >-
     <p>Labs Workbench is an environment where developers can prototype tools and capabilities that help build out the NDS framework and services.</p>
     <p>In particular, it is a place that can host the development activities of <a href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects.</a></p>
+  ingress_class: ""
   brand_logo_path: "../asset/png/favicon-32x32.png"
   favicon_path: "../asset/png/favicon-16x16.png"
   learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
-  help_links: "[{ \"name\": \"Feature Overview\", \"icon\": \"fa-info-circle\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview\" },{ \"name\": \"F.A.Q.\", \"icon\": \"fa-question-circle\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions\"}, { \"name\": \"User's Guide\",           icon: \"fa-book\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide\" }, { \"name\": \"Developer's Guide\", \"icon\": \"fa-code-fork\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide\" },{ \"name\": \"Acceptable Use Policy\",  \"icon\": \"fa-gavel\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy\" }]"
+  help_links: "[{ \"name\": \"Feature Overview\", \"icon\": \"fa-info-circle\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview\" },{ \"name\": \"F.A.Q.\", \"icon\": \"fa-question-circle\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions\"}, { \"name\": \"User's Guide\", \"icon\": \"fa-book\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide\" }, { \"name\": \"Developer's Guide\", \"icon\": \"fa-code-fork\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide\" },{ \"name\": \"Acceptable Use Policy\",  \"icon\": \"fa-gavel\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy\" }]"
   domain: "local.ndslabs.org"
   subdomain_prefix: "www"
   volume_name: "global"
@@ -134,13 +136,13 @@ workbench:
   support_email: "ndslabs-support@nationaldataservice.org"
   analytics_tracking_id: ""
   require_account_approval: true
-  strategyType: "RollingUpdate"
+  strategyType: "RollingUpdate"       # or "Recreate" if using RWO data volume
   specs:
     repo: "https://github.com/nds-org/ndslabs-specs.git"
     branch: "master"
   images:
-    webui: "ndslabs/angular-ui:1.2.0"
-    apiserver: "ndslabs/apiserver:1.2.0"
+    webui: "ndslabs/angular-ui:1.3.2"
+    apiserver: "ndslabs/apiserver:1.3.2"
     etcd: "quay.io/coreos/etcd:v3.3"
     smtp: "namshi/smtp:latest"
   etcd_storage:
