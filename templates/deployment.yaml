@@ -1,14 +1,14 @@
-{{ if .Values.rbac.enabled }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 ---
-kind: ClusterRole
+kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
 rules:
 - apiGroups: ["", "extensions", "apps", "batch", "policy", "rbac.authorization.k8s.io", "networking.k8s.io"]
   resources: ["componentstatuses", "persistentvolumeclaims", "replicasets", "deployments", "events", "endpoints", "pods", "pods/log", "pods/exec", "namespaces", "services", "replicationcontrollers", "secrets", "resourcequotas", "limitranges", "networkpolicies"]
@@ -20,119 +20,129 @@ rules:
 - apiGroups: ["extensions"]
   resources: ["ingresses"]
   verbs: ["get", "list", "watch", "update", "patch", "create", "delete"]
-- nonResourceURLs: ["*"]
-  verbs: ["*"]
+#- nonResourceURLs: ["*"]
+#  verbs: ["*"]
 ---
-kind: ClusterRoleBinding
+kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
 subjects:
 - kind: ServiceAccount
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 roleRef:
-  kind: ClusterRole
+  kind: Role
   name: {{ .Release.Name }}
   apiGroup: rbac.authorization.k8s.io
 ---
-{{ end }}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
+{{- with .Values.backend.labels | default "app: workbench" }}
+{{ toYaml . | indent 4 }}
+{{- end }}
     component: {{ .Release.Name }}
 spec:
   selector:
-{{- with .Values.controller.labels | default "app: workbench" }}
+{{- with .Values.backend.labels | default "app: workbench" }}
 {{ toYaml . | indent 4 }}
 {{- end }}
   ports:
     - port: 80
       name: webui
       protocol: TCP
-    - port: 30001
+    - port: 5000
       name: api
       protocol: TCP
-    - name: smtp
-      port: 25
-      protocol: TCP
-{{- if .Values.workbench.etcd_storage.persistent.type | default false }}
+{{- if .Values.backend.storage.db.persistent.type | default false }}
 ---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Release.Name }}-etcd
+  name: {{ .Release.Name }}-db
+  labels:
+{{- with .Values.backend.labels | default "app: workbench" }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   storageClassName: ""
   capacity:
-    storage: {{ .Values.workbench.etcd_storage.size | quote }}
+    storage: {{ .Values.backend.storage.db.size | quote }}
   accessModes:
-    - {{ .Values.workbench.etcd_storage.access_mode | quote }}
-  {{- if eq .Values.workbench.etcd_storage.persistent.type "aws" | default nil }}
+    - {{ .Values.backend.storage.db.access_mode | quote }}
+  {{- if eq .Values.backend.storage.db.persistent.type "aws" | default nil }}
   awsElasticBlockStore:
-    volumeID: {{ .Values.workbench.etcd_storage.persistent.volume_id | quote }}
-  {{- else if eq .Values.workbench.etcd_storage.persistent.type "gce" | default nil }}
+    volumeID: {{ .Values.backend.storage.db.persistent.volume_id | quote }}
+  {{- else if eq .Values.backend.storage.db.persistent.type "gce" | default nil }}
   gcePersistentDisk:
-    pdName: {{ .Values.workbench.etcd_storage.persistent.volume_id | quote }}
+    pdName: {{ .Values.backend.storage.db.persistent.volume_id | quote }}
   {{- end }}
     fsType: ext4
   claimRef:
     namespace: {{ .Release.Namespace }}
-    name: {{ .Release.Name }}-etcd
+    name: {{ .Release.Name }}-db
 {{- end }}
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-etcd
+  name: {{ .Release.Name }}-db
   namespace: {{ .Release.Namespace }}
   annotations:
-  {{- if .Values.workbench.etcd_storage.storage_class }}
-    volume.beta.kubernetes.io/storage-class: {{ .Values.workbench.etcd_storage.storage_class | quote }}
+  {{- if .Values.backend.storage.db.storage_class }}
+    volume.beta.kubernetes.io/storage-class: {{ .Values.backend.storage.db.storage_class | quote }}
   {{- end }}
+  labels:
+{{- with .Values.backend.labels | default "app: workbench" }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
-  {{- if .Values.workbench.etcd_storage.persistent.type | default false }}
+  {{- if .Values.backend.storage.db.persistent.type | default false }}
   storageClassName: ""
-  volumeName: {{ .Release.Name }}-etcd
+  volumeName: {{ .Release.Name }}-db
   {{- end }}
   accessModes:
-    - {{ .Values.workbench.etcd_storage.access_mode | quote }}
+    - {{ .Values.backend.storage.db.access_mode | default "ReadWriteOnce" }}
   resources:
     requests:
-      storage: {{ .Values.workbench.etcd_storage.size | quote }}
+      storage: {{ .Values.backend.storage.db.size | quote }}
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: {{ .Values.controller.kind | default "Deployment" }}
 metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
+  labels:
+{{- with .Values.backend.labels | default "app: workbench" }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   replicas: 1
   strategy:
     type: {{ .Values.controller.strategy_type | default "RollingUpdate" }}
   selector:
     matchLabels:
-{{- with .Values.controller.labels | default "app: workbench" }}
+{{- with .Values.backend.labels | default "app: workbench" }}
 {{ toYaml . | indent 6 }}
 {{- end }}
   template:
     metadata:
       labels:
-{{- with .Values.controller.labels | default "app: workbench" }}
+{{- with .Values.backend.labels | default "app: workbench" }}
 {{ toYaml . | indent 8 }}
 {{- end }}
       annotations:
         configHash: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
     spec:
-{{ if .Values.rbac.enabled }}
       serviceAccountName: {{ .Release.Name }}
-{{ end }}
       containers:
       - name: webui
-        image: {{ .Values.controller.images.webui | default "ndslabs/webui:react" }}
+        image: {{ required "Must specify an image for controller.images.webui" .Values.controller.images.webui }}
         imagePullPolicy: Always
         ports:
         - containerPort: 80
@@ -141,13 +151,14 @@ spec:
         - name: frontend-config
           mountPath: /usr/share/nginx/html/frontend.json
           subPath: frontend.json
+        - name: backend-config
+          mountPath: /usr/share/nginx/html/backend.json
+          subPath: backend.json
+
       - name: apiserver
-        image: {{ required "Must specify an image for ndslabs-apiserver" .Values.controller.images.apiserver }}
+        image: {{ required "Must specify an image for controller.images.apiserver" .Values.controller.images.apiserver }}
         imagePullPolicy: Always
         volumeMounts:
-        - name: frontend-config
-          mountPath: /app/env/frontend.json
-          subPath: frontend.json
         - name: backend-config
           mountPath: /app/env/backend.json
           subPath: backend.json
@@ -156,230 +167,39 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.annotations['configHash']
-
         readinessProbe:
           httpGet:
-            path: /asset/png/favicon-2-32x32.png
-            port: 3000
+            path: /api/v1/version
+            port: 5000
             scheme: HTTP
           initialDelaySeconds: 10
           timeoutSeconds: 120
-
-      - name: apiserver
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /api/healthz
-            port: 30001
-            scheme: HTTP
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          successThreshold: 1
-          timeoutSeconds: 1
-        image: {{ required "Must specify an image for ndslabs-apiserver" .Values.workbench.images.apiserver }}
-        imagePullPolicy: Always
-        securityContext:
-          privileged: true
+#        livenessProbe:
+#          failureThreshold: 3
+#          httpGet:
+#            path: /api/v1/version
+#            port: 5000
+#            scheme: HTTP
+#          initialDelaySeconds: 5
+#          periodSeconds: 5
+#          successThreshold: 1
+#          timeoutSeconds: 1
         ports:
-        - containerPort: 30001
-          protocol: TCP
-        - containerPort: 30002
-          protocol: TCP
-        env:
->>>>>>> 2e447a0dfdc488b701dd587da732154000bbbcc4
-{{ if .Values.workbench.shared_storage.enabled }}
-          - name: SHARED_VOLUME_PATH
-            valueFrom:
-              configMapKeyRef:
-                key: workbench.shared_storage.volume_path
-                name: {{ .Release.Name }}
-          - name: SHARED_VOLUME_NAME
-            valueFrom:
-              configMapKeyRef:
-                key: workbench.shared_storage.volume_name
-                name: {{ .Release.Name }}
-          - name: SHARED_VOLUME_READ_ONLY
-            valueFrom:
-              configMapKeyRef:
-                key: workbench.shared_storage.read_only
-                name: {{ .Release.Name }}
-{{ end }}
-          - name: WORKBENCH_NAME
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.name
-          - name: TLS_ISSUER
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.ingress.tls.issuer
-          - name: TLS_CLUSTER_ISSUER
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.ingress.tls.cluster_issuer
-          - name: SUPPORT_EMAIL
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.support_email
-          - name: REQUIRE_APPROVAL
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.require_account_approval
-          - name: DOMAIN
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.domain
-          - name: SPEC_GIT_REPO
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: git.spec_repo
-          - name: SPEC_GIT_BRANCH
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: git.spec_branch
-          - name: SIGNIN_URL
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.signin_url
-          - name: AUTH_URL
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.auth_url
-          - name: NODE_SELECTOR_NAME
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.node_selector_name
-          - name: NODE_SELECTOR_VALUE
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.node_selector_value
-          - name: CORS_ORIGIN_ADDR
-{{ if .Values.frontend.subdomain_prefix }}
-            value: "https://{{ .Values.workbench.subdomain_prefix }}.$(DOMAIN)"
-{{ else }}
-            value: "https://$(DOMAIN)"
-{{ end }}
-          - name: ETCD_ADDR
-            value: "localhost:4001"
-          - name: KUBERNETES_ADDR
-            value: "https://$(KUBERNETES_SERVICE_HOST):$(KUBERNETES_SERVICE_PORT_HTTPS)"
-          - name: INGRESS
-            value: "LoadBalancer"
-          - name: TIMEOUT
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.timeout
-          - name: INACTIVITY_TIMEOUT
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.inactivity_timeout
-          - name: TOKEN_PATH
-            value: "/var/run/secrets/kubernetes.io/serviceaccount/token"
-          - name: SMTP_HOST
-            value: "localhost"
-          - name: SMTP_TLS
-            value: "false"
-          - name: HOME_PVC_SUFFIX
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.home_storage.home_pvc_suffix
-          - name: PVC_STORAGE_CLASS
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: workbench.home_storage.pvc_storage_class
-        securityContext:
-          privileged: true
-        ports:
-        - containerPort: 30001
+        - containerPort: 5000
           name: api
-      - name: etcd
-        image: {{ required "Must specify an image for ndslabs-etcd" .Values.controller.images.etcd }}
-        command:
-        - /usr/local/bin/etcd
-        - --listen-client-urls=http://0.0.0.0:4001
-        - --advertise-client-urls=http://127.0.0.1:4001
-        - --data-dir=/var/etcd/data
+
+      - name: db
+        image: {{ required "Must specify an image for controller.images.db" .Values.controller.images.db }}
         ports:
-        - containerPort: 4001
-          name: etcd
+        - containerPort: 27017
+          name: db
         volumeMounts: 
-        - name: varetcd
-          mountPath: /var/etcd
-      - name: smtp
-        image: {{ required "Must specify an image for ndslabs-smtp" .Values.workbench.images.smtp }}
-        ports:
-        - containerPort: 25
-          name: smtp
-        env:
-          - name: MAILNAME
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: smtp.host
-          - name: PORT
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: smtp.port
-          - name: GMAIL_USER
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: smtp.gmail_user
-          - name: GMAIL_PASSWORD
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: smtp.gmail_pass
-          - name: SES_USER
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: smtp.aws_ses_user
-          - name: SES_PASSWORD
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: smtp.aws_ses_password
-          - name: SMARTHOST_ADDRESS
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: smtp.smarthost_address
-          - name: SMARTHOST_PORT
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: smtp.smarthost_port
-          - name: SMARTHOST_USER
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: smtp.smarthost_user
-          - name: SMARTHOST_PASSWORD
-            valueFrom:
-              configMapKeyRef:
-                name: {{ .Release.Name }}
-                key: smtp.smarthost_password
+        - name: datadb
+          mountPath: /data/db
       volumes:
        - persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-etcd
-         name: varetcd
+            claimName: {{ .Release.Name }}-db
+         name: datadb
        - name: frontend-config
          configMap:
            name: {{ .Release.Name }}

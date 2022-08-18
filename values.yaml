@@ -4,7 +4,6 @@
 
 # V2
 frontend:
-  domain: "workbench.ndslabs.org"
   subdomain_prefix: "www"
   support_email: ""
   analytics_tracking_id: ""
@@ -33,12 +32,26 @@ frontend:
         url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy"
 
 backend:
+  domain: "local.ndslabs.org"
+  labels:
+    app: workbench
   timeout: 30
   inactivity_timeout: 480
   specs:
     repo: "https://github.com/nds-org/ndslabs-specs.git"
     branch: master
   storage:
+    db:
+      persistent:
+        # Values can be "false" for no persistent storage, "aws" for awsElasticBlockStore,
+        # or "gce" for gcePersistentDisk
+        type: false
+        # If using awsElasticBlockStore enter the EBS volume id, if using gcePersistentDisk
+        # enter the persistent disk name
+        volume_id:
+      storage_class: "hostpath"
+      # access_mode: "ReadWriteOnce"   # default: ReadWriteOnce
+      size: "1Gi"
     home:
       storage_class: "nfs-condo"
       claim_suffix: "-home"
@@ -47,39 +60,58 @@ backend:
       volume_path: "/tmp/shared"
       storage_class: "nfs-condo"
       read_only: true
-  smtp:
-    # Specify host/port to use standalone SMTP
-    host: # smtp.your.edu
-    port: # 25
-    # Specify user/pass to use Gmail SMTP
-    gmail_user: 
-    gmail_pass: 
 
+
+keycloak:
+  enabled: true
+
+mongodb:
+  enabled: true
 
 
 controller:
-  kind: Deployment
-  labels:
-    app: workbench
+  # kind: Deployment   # default: Deployment
   images:
-    etcd: "quay.io/coreos/etcd:v3.3"
-    webui: "ndslabs/angular-ui:1.3.2"
-    apiserver: "ndslabs/apiserver:1.3.2"
-  strategy_type: "RollingUpdate"
+    db: "mongo:3.6"
+    webui: "ndslabs/webui:react"
+    apiserver: "ndslabs/apiserver:python"
+  # strategy_type: "Recreate"  # default: RollingUpdate
 
 ingress:
+  class: ""
   tls:
-    enabled: true
-    hosts:
-      - "*.workbench.ndslabs.org"
-      - "www.workbench.ndslabs.org"
-    secretName: "ndslabs-tls"
+    - hosts:
+      - "*.local.ndslabs.org"
+      - "www.local.ndslabs.org"
+      secretName: "ndslabs-tls"
   root:
     annotations:
-      cluster_issuer: "acmedns-issuer"
-      issuer: ""
-  workbench:
-    annotations: {}
+      kubernetes.io/ingress.class: ""
+      ingress.kubernetes.io/force-ssl-redirect: "true"
+      ingress.kubernetes.io/ssl-redirect: "true"
+      ingress.kubernetes.io/preserve-host: "true"
+      ingress.kubernetes.io/redirect-permanent: "true"
+      ingress.kubernetes.io/redirect-regex: "^https://(.*)"
+      ingress.kubernetes.io/redirect-replacement: "https://www.$1"
+      # ingress.kubernetes.io/permanent-redirect: "https://www.workbench.ndslabs.org/landing/"
+
+
+  open:
+    annotations:
+      cert-manager.io/cluster-issuer: "acmedns-staging"
+      kubernetes.io/ingress.class: ""
+      nginx.ingress.kubernetes.io/app-root: "/"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  auth:
+    annotations:
+      kubernetes.io/ingress.class: ""
+      kubernetes.io/ssl-redirect: "true"
+      kubernetes.io/force-ssl-redirect: "true"
+      ingress.kubernetes.io/auth-url: "https://$host/cauth/auth"
+      ingress.kubernetes.io/auth-signin: "https://$host/login/"
+      ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email"
+
       
   
   userapps:
@@ -111,118 +143,3 @@ tolerations: []
 affinity: {}
 
 
-
-#### V1
-
-
-workbench:
-  dev:
-    enabled: false
-    uisrc: ""
-  name: "Labs Workbench"
-  landing_html: >-
-    <p>Labs Workbench is an environment where developers can prototype tools and capabilities that help build out the NDS framework and services.</p>
-    <p>In particular, it is a place that can host the development activities of <a href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects.</a></p>
-  ingress_class: ""
-  brand_logo_path: "../asset/png/favicon-32x32.png"
-  favicon_path: "../asset/png/favicon-16x16.png"
-  learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
-  help_links: "[{ \"name\": \"Feature Overview\", \"icon\": \"fa-info-circle\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview\" },{ \"name\": \"F.A.Q.\", \"icon\": \"fa-question-circle\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions\"}, { \"name\": \"User's Guide\", \"icon\": \"fa-book\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide\" }, { \"name\": \"Developer's Guide\", \"icon\": \"fa-code-fork\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide\" },{ \"name\": \"Acceptable Use Policy\",  \"icon\": \"fa-gavel\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy\" }]"
-  domain: "local.ndslabs.org"
-  subdomain_prefix: "www"
-  volume_name: "global"
-  volume_path: "/ndslabs/data/volumes"
-  etcd_path: "/ndslabs/data/etcd"
-  support_email: "ndslabs-support@nationaldataservice.org"
-  analytics_tracking_id: ""
-  require_account_approval: true
-  strategyType: "RollingUpdate"       # or "Recreate" if using RWO data volume
-  specs:
-    repo: "https://github.com/nds-org/ndslabs-specs.git"
-    branch: "master"
-  images:
-    webui: "ndslabs/angular-ui:1.3.2"
-    apiserver: "ndslabs/apiserver:1.3.2"
-    etcd: "quay.io/coreos/etcd:v3.3"
-    smtp: "namshi/smtp:latest"
-  etcd_storage:
-    persistent:
-      # Values can be "false" for no persistent storage, "aws" for awsElasticBlockStore,
-      # or "gce" for gcePersistentDisk
-      type: false
-      # If using awsElasticBlockStore enter the EBS volume id, if using gcePersistentDisk
-      # enter the persistent disk name
-      volume_id:
-    storage_class:
-    access_mode: "ReadWriteOnce"
-    size: "1Gi"
-  home_storage:
-    home_pvc_suffix: "-home"
-    pvc_storage_class: "nfs"
-  shared_storage:
-    enabled: false
-    volume_name: "shared"
-    volume_path: "/tmp/shared"
-    read_only: true
-  timeout: 30
-  inactivity_timeout: 480
-
-  # Enable optional UI features (default is true)
-  advanced_features:
-    show_config: true
-    show_logs: true
-    show_console: true
-    show_remove_service: true
-    show_edit_service: true
-    show_service_help_icon: true
-    show_create_spec: true
-    show_import_spec: true
-    show_file_manager: true
-
-oauth:
-  enabled: false
-  signin_url: "https://$host/login/"
-  auth_url: "https://$host/cauth/auth"
-  auth_response_headers: "x-auth-request-user, x-auth-request-email" # , x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
-
-certmgr:
-  cluster_issuer: "acmedns-issuer"
-  issuer: ""
-
-rbac:
-  enabled: true
-
-smtp:
-  # Specify host/port to use standalone SMTP
-  host: 
-  port: 
-  # Specify user/pass to use Gmail SMTP
-  gmail_user: 
-  gmail_pass: 
-
-# Insert your tls certificate and private key here
-# NOTE: To generate a new certificate, you can run the helper script included with this chart:
-#    ./generate-self-signed-cert.sh [DOMAIN]
-#
-# If you do not specify a domain, you will be prompted for one
-tls:
-  enabled: true
-  secretName: "ndslabs-tls"
-    
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #  cpu: 100m
-  #  memory: 128Mi
-  # requests:
-  #  cpu: 100m
-  #  memory: 128Mi
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
