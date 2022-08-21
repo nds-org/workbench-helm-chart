@@ -18,3 +18,4 @@
 # Self-signed certificates
 certs/
 acmedns*.json
+charts/
