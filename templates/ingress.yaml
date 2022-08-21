@@ -2,10 +2,10 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Release.Name }}-auth
+  name: {{ .Release.Name }}-webui
   namespace: {{ .Release.Namespace }}
   annotations:
-{{ toYaml .Values.ingress.auth.annotations | indent 4 }}
+{{ toYaml .Values.ingress.webui.annotations | indent 4 }}
 spec:
 {{ if .Values.ingress.tls | default false }}
   tls:
@@ -15,33 +15,26 @@ spec:
   - host: {{ .Values.backend.domain }}
     http:
       paths:
-      - path: /logs
-        pathType: Prefix
+      - path: /
+        pathType: ImplementationSpecific
         backend:
           service:
             name: {{ .Release.Name }}
             port:
               number: 80
-      - path: /dashboard
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ .Release.Name }}
-            port: 
-              number: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Release.Name }}-open
+  name: {{ .Release.Name }}-api
   namespace: {{ .Release.Namespace }}
   annotations:
-{{ toYaml .Values.ingress.open.annotations | indent 4 }}
+{{ toYaml .Values.ingress.api.annotations | indent 4 }}
 spec:
 {{ if .Values.ingress.tls | default false }}
   tls:
 {{ toYaml .Values.ingress.tls | indent 4 }}
-  {{ end }}
+{{ end }}
   rules:
   - host: {{ .Values.backend.domain }}
     http:
@@ -53,10 +46,3 @@ spec:
             name: {{ .Release.Name }}
             port: 
               number: 5000
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ .Release.Name }}
-            port: 
-              number: 80

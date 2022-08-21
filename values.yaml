@@ -4,10 +4,9 @@
 
 # V2
 frontend:
-  subdomain_prefix: "www"
   support_email: ""
   analytics_tracking_id: ""
-  signin_url: "https://www.workbench.ndslabs.org/oauth2/start?rd=https%3A%2F%2Fwww.workbench.ndslabs.org%2Fmy-apps"
+  signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
   customization:
     product_name: "Workbench"
     landing_html: "<span style='font-size:20pt;'><p>Labs Workbench is an environment where developers can prototype tools and capabilities</p><p>that help build out the NDS framework and services. In particular, it is a place that can</p><p>host the development activities of <a style='text-decoration:none;' href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects</a></p></span>"
@@ -17,7 +16,7 @@ frontend:
     help_links:
       - icon: "fa-info-circle"
         name: "Feature Overview"
-        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview"
+        url: https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview"
       - icon: "fa-question-circle"
         name: "FAQ"
         url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions"
@@ -32,97 +31,224 @@ frontend:
         url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy"
 
 backend:
-  domain: "local.ndslabs.org"
+  mongoUri: "mongodb://workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs"
+  domain: "kubernetes.docker.internal"
+  insecure_ssl_verify: "false"   # default: true
   labels:
-    app: workbench
+    manager: workbench
   timeout: 30
   inactivity_timeout: 480
   specs:
     repo: "https://github.com/nds-org/ndslabs-specs.git"
     branch: master
   storage:
-    db:
-      persistent:
-        # Values can be "false" for no persistent storage, "aws" for awsElasticBlockStore,
-        # or "gce" for gcePersistentDisk
-        type: false
-        # If using awsElasticBlockStore enter the EBS volume id, if using gcePersistentDisk
-        # enter the persistent disk name
-        volume_id:
-      storage_class: "hostpath"
-      # access_mode: "ReadWriteOnce"   # default: ReadWriteOnce
-      size: "1Gi"
     home:
-      storage_class: "nfs-condo"
+      storage_class: "nfs"
       claim_suffix: "-home"
     shared:
       enabled: false
       volume_path: "/tmp/shared"
-      storage_class: "nfs-condo"
+      storage_class: "nfs"
       read_only: true
 
-
-keycloak:
+# Enable this to run an NGINX ingress controller (if you aren't running another ingress controller)
+ingress-nginx:
   enabled: true
+  controller:
+    # If you have an existing TLS secret, you can uncomment this to specify it here
+    # Otherwise NGINX will generate a self-signed and use that instead
+    #extraArgs:
+    #  default-ssl-certificate: workbench/ndslabs-tls
+    hostPort:
+      enabled: true
+    kind: Deployment
+
+# Enable this to use an external NFS server to provision user volumes (e.g. nfs-condo)
+nfs-client-provisioner:
+  enabled: false   # WARNING: experimental
+  nfs:
+    server: "workbench-nfs-server-provisioner.workbench.svc.cluster.local"
+    path: "/export"
+    mountOptions:
+    - tcp
+    - nfsvers=3
+    
+# Enable this to run a local NFS server (development only)      
+nfs-server-provisioner:
+  enabled: true
+  persistence:
+    enabled: true
+    storageClass: "hostpath"
+
+# Enable this to run a local Keycloak instance (development only)
+keycloak:
+  enabled: true   # WARNING: experimental
+  hostname: "https://kubernetes.docker.internal/auth"
+  realmName: "workbench-dev"
+  clientId: "workbench-local"
+  clientSecret: ""
+  httpRelativePath: "/auth/"
+  auth:
+    adminUser: "admin"
+    adminPassword: "workbench"
+  proxyAddressForwarding: true
+  extraEnvVars:
+    - name: KEYCLOAK_EXTRA_ARGS
+      value: "-Dkeycloak.import=/config/realm.json"
+  extraVolumeMounts:
+    - name: config
+      mountPath: "/config"
+      readOnly: true
+  extraVolumes:
+    - name: config
+      configMap:
+        name: keycloak-realm
+        items:
+        - key: "realm.json"
+          path: "realm.json"
+  global:
+    storageClass: "hostpath"
+    postgresql:
+      auth:
+        postgresPassword: workbench
+        password: workbench
+  postgresql:
+    enabled: true
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: true
+    className: nginx
+    hostname: "kubernetes.docker.internal"
+    tls: true
+    path: /auth/
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    extraTls:
+      - hosts:
+        - kubernetes.docker.internal
+
+
+oauth2-proxy:
+  enabled: true
+  # To enable session storage backed by redis:
+  #sessionStorage:
+  #  type: redis
+  #redis:
+  #  enabled: true
+  #hostAlias:
+  #  enabled: true
+  #  ip: "10.105.112.195"
+  #  hostname: "keycloak.local.ndslabs.org"
+  #extraEnv:
+  #  - name: OAUTH2_PROXY_COOKIE_DOMAINS
+  #    value: ".docker.internal"
+  extraArgs:
+    # Keycloak OIDC config:
+    provider: keycloak-oidc
+    provider-display-name: Workbench Login
+    redirect-url: "https://kubernetes.docker.internal/oauth2/callback"
+    oidc-issuer-url: "https://kubernetes.docker.internal/auth/realms/workbench-dev"
+    client-id: "workbench-local"
+
+    # Authorization config:
+    #email-domain: "*"
+    #whitelist-domain: "*"
+    #scope: email profile
+    #allowed-group: "/workbench"
+
+    # Local Development Only:
+    insecure-oidc-skip-issuer-verification: true
+    insecure-oidc-allow-unverified-email: true
+    ssl-insecure-skip-verify: true
+    ssl-upstream-insecure-skip-verify: true
+    force-json-errors: true
+  ingress:
+    enabled: true
+    className: nginx
+    path: /oauth2/
+    hosts:
+      - kubernetes.docker.internal
+    tls:
+    #  - secretName: ndslabs-tls
+      - hosts:
+          - kubernetes.docker.internal
+    #      - local.ndslabs.org
+    #      - '*.local.ndslabs.org'
+  
 
 mongodb:
   enabled: true
+  #useStatefulSet: true
+  architecture: standalone   # WARNING: experimental
+  auth:
+    replicaSetKey: "workbenchauthtoken12345"
+  replicaCount: 3
+  persistent:
+    # Values can be "false" for no persistent storage, "aws" for awsElasticBlockStore,
+    # or "gce" for gcePersistentDisk
+    type: false
+    # If using awsElasticBlockStore enter the EBS volume id, if using gcePersistentDisk
+    # enter the persistent disk name
+    volume_id:
+  storage_class: "hostpath"
+  access_mode: "ReadWriteOnce"   # default: ReadWriteOnce
+  size: "1Gi"
 
 
 controller:
   # kind: Deployment   # default: Deployment
   images:
-    db: "mongo:3.6"
     webui: "ndslabs/webui:react"
     apiserver: "ndslabs/apiserver:python"
   # strategy_type: "Recreate"  # default: RollingUpdate
+  auth:
+    rootPassword: "workbench"
+  #hostAliases:
+  #- ip: "10.105.112.195"
+  #  hostnames:
+  #  - "keycloak.local.ndslabs.org"
 
 ingress:
-  class: ""
+  class: "nginx"
   tls:
     - hosts:
-      - "*.local.ndslabs.org"
-      - "www.local.ndslabs.org"
-      secretName: "ndslabs-tls"
-  root:
+      - "kubernetes.docker.internal"
+  #    - "*.local.ndslabs.org"
+  #    - "local.ndslabs.org"
+  #    secretName: "ndslabs-tls"
+  api:
     annotations:
-      kubernetes.io/ingress.class: ""
-      ingress.kubernetes.io/force-ssl-redirect: "true"
+      #cert-manager.io/issuer: "selfsigned"
+      kubernetes.io/ingress.class: "nginx"
+      ingress.kubernetes.io/app-root: "/"
       ingress.kubernetes.io/ssl-redirect: "true"
-      ingress.kubernetes.io/preserve-host: "true"
-      ingress.kubernetes.io/redirect-permanent: "true"
-      ingress.kubernetes.io/redirect-regex: "^https://(.*)"
-      ingress.kubernetes.io/redirect-replacement: "https://www.$1"
-      # ingress.kubernetes.io/permanent-redirect: "https://www.workbench.ndslabs.org/landing/"
-
-
-  open:
+      ingress.kubernetes.io/force-ssl-redirect: "true"
+  webui:
     annotations:
-      cert-manager.io/cluster-issuer: "acmedns-staging"
-      kubernetes.io/ingress.class: ""
-      nginx.ingress.kubernetes.io/app-root: "/"
-      nginx.ingress.kubernetes.io/ssl-redirect: "true"
-      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-  auth:
-    annotations:
-      kubernetes.io/ingress.class: ""
-      kubernetes.io/ssl-redirect: "true"
-      kubernetes.io/force-ssl-redirect: "true"
-      ingress.kubernetes.io/auth-url: "https://$host/cauth/auth"
-      ingress.kubernetes.io/auth-signin: "https://$host/login/"
-      ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email"
+      kubernetes.io/ingress.class: "nginx"
+      ingress.kubernetes.io/app-root: "/"
+      ingress.kubernetes.io/ssl-redirect: "true"
+      ingress.kubernetes.io/force-ssl-redirect: "true"
+      #nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
+      #nginx.ingress.kubernetes.io/auth-signin: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
+      #nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email"
 
       
   
   userapps:
     annotations:
-      # kubernetes.io/ingress.class: "traefik"
-      signin_url: "https://www.workbench.ndslabs.org/oauth2/start?rd=https%3A%2F%2Fwww.workbench.ndslabs.org%2Fmy-apps"
-      auth_url: "https://www.workbench.ndslabs.org/oauth2/auth"
-      auth_response_headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
+      kubernetes.io/ingress.class: "nginx"
+      ingress.kubernetes.io/ssl-redirect: "true"
+      ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/signin-url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
+      nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
   
 
-### TODO
+
+
+#### TODO:
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

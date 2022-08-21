@@ -4,14 +4,14 @@ metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 ---
-kind: Role
+kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{ .Release.Name }}
-  namespace: {{ .Release.Namespace }}
+#  namespace: {{ .Release.Namespace }}
 rules:
 - apiGroups: ["", "extensions", "apps", "batch", "policy", "rbac.authorization.k8s.io", "networking.k8s.io"]
-  resources: ["componentstatuses", "persistentvolumeclaims", "replicasets", "deployments", "events", "endpoints", "pods", "pods/log", "pods/exec", "namespaces", "services", "replicationcontrollers", "secrets", "resourcequotas", "limitranges", "networkpolicies"]
+  resources: ["componentstatuses", "persistentvolumeclaims", "replicasets", "deployments", "events", "endpoints", "pods", "pods/log", "pods/exec", "namespaces", "services", "replicationcontrollers", "secrets", "resourcequotas", "limitranges", "networkpolicies", "*"]
   verbs: ["get", "list", "watch", "update", "patch", "create", "delete"]
 - apiGroups: [""]
   resources: ["configmaps"]
@@ -23,17 +23,17 @@ rules:
 #- nonResourceURLs: ["*"]
 #  verbs: ["*"]
 ---
-kind: RoleBinding
+kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{ .Release.Name }}
-  namespace: {{ .Release.Namespace }}
+#  namespace: {{ .Release.Namespace }}
 subjects:
 - kind: ServiceAccount
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 roleRef:
-  kind: Role
+  kind: ClusterRole
   name: {{ .Release.Name }}
   apiGroup: rbac.authorization.k8s.io
 ---
@@ -59,58 +59,6 @@ spec:
     - port: 5000
       name: api
       protocol: TCP
-{{- if .Values.backend.storage.db.persistent.type | default false }}
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: {{ .Release.Name }}-db
-  labels:
-{{- with .Values.backend.labels | default "app: workbench" }}
-{{ toYaml . | indent 4 }}
-{{- end }}
-spec:
-  storageClassName: ""
-  capacity:
-    storage: {{ .Values.backend.storage.db.size | quote }}
-  accessModes:
-    - {{ .Values.backend.storage.db.access_mode | quote }}
-  {{- if eq .Values.backend.storage.db.persistent.type "aws" | default nil }}
-  awsElasticBlockStore:
-    volumeID: {{ .Values.backend.storage.db.persistent.volume_id | quote }}
-  {{- else if eq .Values.backend.storage.db.persistent.type "gce" | default nil }}
-  gcePersistentDisk:
-    pdName: {{ .Values.backend.storage.db.persistent.volume_id | quote }}
-  {{- end }}
-    fsType: ext4
-  claimRef:
-    namespace: {{ .Release.Namespace }}
-    name: {{ .Release.Name }}-db
-{{- end }}
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: {{ .Release.Name }}-db
-  namespace: {{ .Release.Namespace }}
-  annotations:
-  {{- if .Values.backend.storage.db.storage_class }}
-    volume.beta.kubernetes.io/storage-class: {{ .Values.backend.storage.db.storage_class | quote }}
-  {{- end }}
-  labels:
-{{- with .Values.backend.labels | default "app: workbench" }}
-{{ toYaml . | indent 4 }}
-{{- end }}
-spec:
-  {{- if .Values.backend.storage.db.persistent.type | default false }}
-  storageClassName: ""
-  volumeName: {{ .Release.Name }}-db
-  {{- end }}
-  accessModes:
-    - {{ .Values.backend.storage.db.access_mode | default "ReadWriteOnce" }}
-  resources:
-    requests:
-      storage: {{ .Values.backend.storage.db.size | quote }}
 ---
 apiVersion: apps/v1
 kind: {{ .Values.controller.kind | default "Deployment" }}
@@ -140,6 +88,10 @@ spec:
         configHash: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
     spec:
       serviceAccountName: {{ .Release.Name }}
+{{- with .Values.controller.hostAliases }}
+      hostAliases:
+{{ toYaml . | indent 8 }}
+{{- end }}
       containers:
       - name: webui
         image: {{ required "Must specify an image for controller.images.webui" .Values.controller.images.webui }}
@@ -151,14 +103,14 @@ spec:
         - name: frontend-config
           mountPath: /usr/share/nginx/html/frontend.json
           subPath: frontend.json
-        - name: backend-config
-          mountPath: /usr/share/nginx/html/backend.json
-          subPath: backend.json
 
       - name: apiserver
         image: {{ required "Must specify an image for controller.images.apiserver" .Values.controller.images.apiserver }}
         imagePullPolicy: Always
         volumeMounts:
+        - name: frontend-config
+          mountPath: /app/env/frontend.json
+          subPath: frontend.json
         - name: backend-config
           mountPath: /app/env/backend.json
           subPath: backend.json
@@ -167,6 +119,19 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.annotations['configHash']
+          - name: KEYCLOAK_HOST
+            value: "{{ .Values.keycloak.hostname }}"
+          - name: MONGO_URI
+            value: "{{ required "You must specify a mongo hostname" .Values.backend.mongoUri }}"
+          - name: KEYCLOAK_REALM
+            value: "{{ .Values.keycloak.realmName | default "workbench-dev" }}"
+          - name: KEYCLOAK_CLIENT_ID
+            value: "{{ .Values.keycloak.clientId | default "workbench-local" }}"
+          - name: KEYCLOAK_CLIENT_SECRET
+            value: "{{ .Values.keycloak.clientSecret }}"
+          - name: INSECURE_SSL_VERIFY
+            value: "{{ .Values.backend.insecure_ssl_verify | default true }}"
+
         readinessProbe:
           httpGet:
             path: /api/v1/version
@@ -188,18 +153,7 @@ spec:
         - containerPort: 5000
           name: api
 
-      - name: db
-        image: {{ required "Must specify an image for controller.images.db" .Values.controller.images.db }}
-        ports:
-        - containerPort: 27017
-          name: db
-        volumeMounts: 
-        - name: datadb
-          mountPath: /data/db
       volumes:
-       - persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-db
-         name: datadb
        - name: frontend-config
          configMap:
            name: {{ .Release.Name }}
