@@ -3,8 +3,8 @@ dependencies:
   repository: https://kubernetes.github.io/ingress-nginx
   version: 4.1.4
 - name: oauth2-proxy
-  repository: https://oauth2-proxy.github.io/manifests
-  version: 6.2.2
+  repository: https://charts.bitnami.com/bitnami
+  version: 3.1.0
 - name: nfs-client-provisioner
   repository: https://supertetelman.github.io/charts/
   version: 1.2.11
@@ -17,5 +17,5 @@ dependencies:
 - name: keycloak
   repository: https://charts.bitnami.com/bitnami
   version: 9.6.9
-digest: sha256:ff823c1a5abdca1d8dd1a3a29e88cc9f918da030e11bdbbcce0ffbc62a1f0625
-generated: "2022-08-19T19:29:52.785251-05:00"
+digest: sha256:194067880d27bc25c4e88be671c3d2fabc684b84bc56e8477e125fa9da5a7bd8
+generated: "2022-08-22T12:09:59.607351-05:00"

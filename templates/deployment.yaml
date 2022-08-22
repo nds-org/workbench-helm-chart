@@ -41,6 +41,12 @@ spec:
       hostAliases:
 {{ toYaml . | indent 8 }}
 {{- end }}
+
+{{- with .Values.controller.initContainers}}
+      initContainers:
+{{ toYaml . | indent 8 }}
+{{- end }}
+
       volumes:
        - name: frontend-config
          configMap:

@@ -9,9 +9,18 @@ controller:
   images:
     webui: "ndslabs/webui:react"
     apiserver: "ndslabs/apiserver:python"
+  initContainers:
+    - name: wait-for-keycloak
+      image: ghcr.io/groundnuty/k8s-wait-for:v1.6
+      imagePullPolicy: Always
+      args:
+        - "pod"
+        - "-lapp.kubernetes.io/component=keycloak"
   #labels:
   #  manager: workbench
-  # strategy_type: "Recreate"  # default: RollingUpdate
+  #strategy_type: "Recreate"  # default: RollingUpdate
+
+  # Uncomment to set DNS aliases within this container
   #hostAliases:
   #- ip: "10.105.112.195"
   #  hostnames:
@@ -24,7 +33,7 @@ ingress:
       - "kubernetes.docker.internal"
   api:
     annotations:
-      #cert-manager.io/issuer: "selfsigned"
+      #cert-manager.io/issuer: "acmedns-staging"
       kubernetes.io/ingress.class: "nginx"
       ingress.kubernetes.io/app-root: "/"
       ingress.kubernetes.io/ssl-redirect: "true"
@@ -130,6 +139,7 @@ ingress-nginx:
       enabled: true
     kind: Deployment
 
+
 # Enable this to use an external NFS server to provision user volumes (e.g. nfs-condo)
 nfs-client-provisioner:
   enabled: false   # WARNING: experimental
@@ -139,6 +149,7 @@ nfs-client-provisioner:
     mountOptions:
     - tcp
     - nfsvers=3
+
     
 # Enable this to run a local NFS server (development only)      
 nfs-server-provisioner:
@@ -146,6 +157,7 @@ nfs-server-provisioner:
   persistence:
     enabled: true
     storageClass: "hostpath"
+
 
 # Enable this to run a local Keycloak instance (development only)
 keycloak:
@@ -156,21 +168,21 @@ keycloak:
     adminPassword: "workbench"
   proxyAddressForwarding: true
   # To automatically import a Keycloak realm for development, uncomment this and create a new configmap:
-  #   kubectl create configmap -n workbench --from-file=realm.json
-  #extraEnvVars:
-  #  - name: KEYCLOAK_EXTRA_ARGS
-  #    value: "-Dkeycloak.import=/config/realm.json"
-  #extraVolumeMounts:
-  #  - name: config
-  #    mountPath: "/config"
-  #    readOnly: true
-  #extraVolumes:
-  #  - name: config
-  #    configMap:
-  #      name: keycloak-realm
-  #      items:
-  #      - key: "realm.json"
-  #        path: "realm.json"
+  #   kubectl create configmap keycloak-realm -n workbench --from-file=realm.json
+  extraEnvVars:
+    - name: KEYCLOAK_EXTRA_ARGS
+      value: "-Dkeycloak.import=/config/realm.json"
+  extraVolumeMounts:
+    - name: config
+      mountPath: "/config"
+      readOnly: true
+  extraVolumes:
+    - name: config
+      configMap:
+        name: keycloak-realm
+        items:
+        - key: "realm.json"
+          path: "realm.json"
   global:
     storageClass: "hostpath"
     postgresql:
@@ -199,32 +211,57 @@ keycloak:
 
 oauth2-proxy:
   enabled: true
-  # To enable session storage backed by redis:
-  #sessionStorage:
-  #  type: redis
-  #redis:
-  #  enabled: true
+  extraDeploy:
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: wait-for-pods
+        namespace: workbench
+      rules:
+      - apiGroups: [""]
+        resources: ["pods"]
+        verbs: ["get", "watch", "list"]
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: oauth2-proxy-wait-for-pods
+        namespace: workbench
+      subjects:
+      - kind: ServiceAccount
+        name: workbench-oauth2-proxy
+        namespace: workbench
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: Role 
+        name: wait-for-pods
+  initContainers:
+    - name: wait-for-keycloak
+      image: ghcr.io/groundnuty/k8s-wait-for:v1.6
+      imagePullPolicy: Always
+      args:
+        - "pod"
+        - "-lapp.kubernetes.io/component=keycloak"
   extraArgs:
     # Keycloak OIDC config:
-    provider: keycloak-oidc
-    provider-display-name: Workbench Login
-    redirect-url: "https://kubernetes.docker.internal/oauth2/callback"
-    oidc-issuer-url: "https://kubernetes.docker.internal/auth/realms/workbench-dev"
-    client-id: "workbench-local"
+    - --provider=keycloak-oidc
+    - --provider-display-name=Workbench Login
+    - --redirect-url=https://kubernetes.docker.internal/oauth2/callback
+    - --oidc-issuer-url=https://kubernetes.docker.internal/auth/realms/workbench-dev
+    - --client-id=workbench-local
 
     # Authorization config:
-    #email-domain: "*"
-    #whitelist-domain: "*"
-    #cookie-domain: ".ndslabs.org"
-    #scope: email profile
-    #allowed-group: "/workbench"
+    #- --email-domain=*
+    #- --whitelist-domain=*
+    #- --cookie-domain=.ndslabs.org
+    #- --scope=email profile
+    #- --allowed-group=/workbench
 
     # Local Development Only:
-    insecure-oidc-skip-issuer-verification: true
-    insecure-oidc-allow-unverified-email: true
-    ssl-insecure-skip-verify: true
-    ssl-upstream-insecure-skip-verify: true
-    force-json-errors: true
+    - --insecure-oidc-skip-issuer-verification=true
+    - --insecure-oidc-allow-unverified-email=true
+    - --ssl-insecure-skip-verify=true
+    - --ssl-upstream-insecure-skip-verify=true
+    - --force-json-errors=true
   ingress:
     enabled: true
     className: nginx
@@ -242,6 +279,7 @@ mongodb:
   architecture: standalone   # WARNING: experimental
   auth:
     replicaSetKey: "workbenchauthtoken12345"
+    rootPassword: "workbench"
   replicaCount: 3
   # TODO: Test AWS + GKE PVs
   persistent:
@@ -255,8 +293,6 @@ mongodb:
   access_mode: "ReadWriteOnce"   # default: ReadWriteOnce
   size: "1Gi"
 
-
-#### TODO:
 
 resources:
   webui: {}
