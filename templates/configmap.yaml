@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   frontend.json: |
-    {{ .Values.frontend | toJson }}
+    {{ .Values.config.frontend | toJson }}
   backend.json: |
-    {{ .Values.backend | toJson }}
+    {{ .Values.config.backend | toJson }}
 

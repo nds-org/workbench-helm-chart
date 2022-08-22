@@ -1,72 +1,11 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: {{ .Release.Name }}
-  namespace: {{ .Release.Namespace }}
----
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: {{ .Release.Name }}
-#  namespace: {{ .Release.Namespace }}
-rules:
-- apiGroups: ["", "extensions", "apps", "batch", "policy", "rbac.authorization.k8s.io", "networking.k8s.io"]
-  resources: ["componentstatuses", "persistentvolumeclaims", "replicasets", "deployments", "events", "endpoints", "pods", "pods/log", "pods/exec", "namespaces", "services", "replicationcontrollers", "secrets", "resourcequotas", "limitranges", "networkpolicies", "*"]
-  verbs: ["get", "list", "watch", "update", "patch", "create", "delete"]
-- apiGroups: [""]
-  resources: ["configmaps"]
-  resourceNames: ["ndslabs-config"]
-  verbs: ["get", "update"]
-- apiGroups: ["extensions"]
-  resources: ["ingresses"]
-  verbs: ["get", "list", "watch", "update", "patch", "create", "delete"]
-#- nonResourceURLs: ["*"]
-#  verbs: ["*"]
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: {{ .Release.Name }}
-#  namespace: {{ .Release.Namespace }}
-subjects:
-- kind: ServiceAccount
-  name: {{ .Release.Name }}
-  namespace: {{ .Release.Namespace }}
-roleRef:
-  kind: ClusterRole
-  name: {{ .Release.Name }}
-  apiGroup: rbac.authorization.k8s.io
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ .Release.Name }}
-  namespace: {{ .Release.Namespace }}
-  labels:
-{{- with .Values.backend.labels | default "app: workbench" }}
-{{ toYaml . | indent 4 }}
-{{- end }}
-    component: {{ .Release.Name }}
-spec:
-  selector:
-{{- with .Values.backend.labels | default "app: workbench" }}
-{{ toYaml . | indent 4 }}
-{{- end }}
-  ports:
-    - port: 80
-      name: webui
-      protocol: TCP
-    - port: 5000
-      name: api
-      protocol: TCP
----
 apiVersion: apps/v1
 kind: {{ .Values.controller.kind | default "Deployment" }}
 metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
-{{- with .Values.backend.labels | default "app: workbench" }}
+    component: {{ .Release.Name }}
+{{- with .Values.controller.labels }}
 {{ toYaml . | indent 4 }}
 {{- end }}
 spec:
@@ -75,23 +14,46 @@ spec:
     type: {{ .Values.controller.strategy_type | default "RollingUpdate" }}
   selector:
     matchLabels:
-{{- with .Values.backend.labels | default "app: workbench" }}
+      component: {{ .Release.Name }}
+{{- with .Values.controller.labels }}
 {{ toYaml . | indent 6 }}
 {{- end }}
   template:
     metadata:
       labels:
-{{- with .Values.backend.labels | default "app: workbench" }}
+        component: {{ .Release.Name }}
+{{- with .Values.controller.labels }}
 {{ toYaml . | indent 8 }}
 {{- end }}
       annotations:
-        configHash: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+        configHash: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
+
+# Service Account Name
+{{- with .Values.controller.serviceAccountName }}
+      serviceAccountName: {{ .Values.controller.serviceAccountName }}
+{{- else}}
       serviceAccountName: {{ .Release.Name }}
+{{- end }}
+
+# HostAliases (optional)
 {{- with .Values.controller.hostAliases }}
       hostAliases:
 {{ toYaml . | indent 8 }}
 {{- end }}
+      volumes:
+       - name: frontend-config
+         configMap:
+           name: {{ .Release.Name }}
+           items:
+            - key: frontend.json
+              path: frontend.json
+       - name: backend-config
+         configMap:
+           name: {{ .Release.Name }}
+           items:
+            - key: backend.json
+              path: backend.json
       containers:
       - name: webui
         image: {{ required "Must specify an image for controller.images.webui" .Values.controller.images.webui }}
@@ -103,6 +65,8 @@ spec:
         - name: frontend-config
           mountPath: /usr/share/nginx/html/frontend.json
           subPath: frontend.json
+        resources:
+{{ toYaml .Values.resources.webui | indent 10 }}
 
       - name: apiserver
         image: {{ required "Must specify an image for controller.images.apiserver" .Values.controller.images.apiserver }}
@@ -120,17 +84,17 @@ spec:
               fieldRef:
                 fieldPath: metadata.annotations['configHash']
           - name: KEYCLOAK_HOST
-            value: "{{ .Values.keycloak.hostname }}"
+            value: "{{ .Values.config.backend.keycloak.hostname }}"
           - name: MONGO_URI
-            value: "{{ required "You must specify a mongo hostname" .Values.backend.mongoUri }}"
+            value: "{{ required "You must specify a mongo hostname" .Values.config.backend.mongo.uri }}"
           - name: KEYCLOAK_REALM
-            value: "{{ .Values.keycloak.realmName | default "workbench-dev" }}"
+            value: "{{ .Values.config.backend.keycloak.realmName | default "workbench-dev" }}"
           - name: KEYCLOAK_CLIENT_ID
-            value: "{{ .Values.keycloak.clientId | default "workbench-local" }}"
+            value: "{{ .Values.config.backend.keycloak.clientId | default "workbench-local" }}"
           - name: KEYCLOAK_CLIENT_SECRET
-            value: "{{ .Values.keycloak.clientSecret }}"
+            value: "{{ .Values.config.backend.keycloak.clientSecret | default "" }}"
           - name: INSECURE_SSL_VERIFY
-            value: "{{ .Values.backend.insecure_ssl_verify | default true }}"
+            value: "{{ .Values.config.backend.insecure_ssl_verify | default true }}"
 
         readinessProbe:
           httpGet:
@@ -152,17 +116,18 @@ spec:
         ports:
         - containerPort: 5000
           name: api
+        resources:
+{{ toYaml .Values.resources.api | indent 10 }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
 
-      volumes:
-       - name: frontend-config
-         configMap:
-           name: {{ .Release.Name }}
-           items:
-            - key: frontend.json
-              path: frontend.json
-       - name: backend-config
-         configMap:
-           name: {{ .Release.Name }}
-           items:
-            - key: backend.json
-              path: backend.json
+{{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+{{- end }}
+
+{{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+{{- end }}
+

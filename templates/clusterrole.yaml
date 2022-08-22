@@ -1,0 +1,18 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}
+#  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups: ["", "extensions", "apps", "batch", "policy", "rbac.authorization.k8s.io", "networking.k8s.io"]
+  resources: ["componentstatuses", "persistentvolumeclaims", "replicasets", "deployments", "events", "endpoints", "pods", "pods/log", "pods/exec", "namespaces", "services", "replicationcontrollers", "secrets", "resourcequotas", "limitranges", "networkpolicies", "*"]
+  verbs: ["get", "list", "watch", "update", "patch", "create", "delete"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["ndslabs-config"]
+  verbs: ["get", "update"]
+- apiGroups: ["extensions"]
+  resources: ["ingresses"]
+  verbs: ["get", "list", "watch", "update", "patch", "create", "delete"]
+#- nonResourceURLs: ["*"]
+#  verbs: ["*"]

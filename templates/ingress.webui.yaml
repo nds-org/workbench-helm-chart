@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-webui
+  namespace: {{ .Release.Namespace }}
+  annotations:
+{{ toYaml .Values.ingress.webui.annotations | indent 4 }}
+spec:
+{{ if .Values.ingress.tls | default false }}
+  tls:
+{{ toYaml .Values.ingress.tls | indent 4  }}
+{{ end }}
+  rules:
+  - host: {{ .Values.config.backend.domain }}
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ .Release.Name }}
+            port:
+              number: 80
