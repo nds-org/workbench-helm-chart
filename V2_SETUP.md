@@ -247,4 +247,8 @@ NOTE: You'll need to re-run `yarn build` after any modifications to the `webui`.
 This will trigger the build step (during which you will get a 500 error) that will refresh the files in `src/webui/build`.
 
 ## TODO
+* ~~`wait-for` startup ordering for `keycloak` <- `oauth2-proxy` + `apiserver` (OIDC discovery)~~
 * source chart somewhere.. NCSA Harbor? github pages?
+* Verbose configuration documentation
+* Adjust webui to speak `_oauth2_proxy` instead of / addition in speaking `keycloak` for OIDC
+* MongoDB replication
