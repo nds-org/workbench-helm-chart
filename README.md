@@ -38,6 +38,7 @@ You can also use the included Makefile helper:
 | `nodeSelector` | map | Node selector(s) to apply to `webui` container | `{}` |
 | `affinity` | map | Affinity to apply to `webui` container | `{}` |
 
+### Controller
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
 | `controller.kind` | string | Kind to use for application manifest | `Deployment` |
@@ -50,6 +51,7 @@ You can also use the included Makefile helper:
 | `controller.extraVolumeMounts.apiserver` | array[map] | Additional `volumeMounts` to set for `apiserver` container | `[]` |
 | `controller.extraVolumes` | array[map] | Additional `volumes` to attach to the main application | `[]` |
 
+### Ingress
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
 | `ingress.class` | string | Class name for Ingress resources | `""` |
@@ -58,6 +60,7 @@ You can also use the included Makefile helper:
 | `ingress.api.annotations` | map | Annotations to set for `api` Ingress resources | `{}` |
 | `ingress.webui.annotations` | map | Annotations to set for `webui` Ingress resources | `{}` |
 
+### Workbench Config: Frontend
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
 | `config.frontend.signin_url` | string | URL to route frontend requests to "Log In"  | `https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F` |
@@ -68,7 +71,7 @@ You can also use the included Makefile helper:
 | `config.frontend.customization.learn_more_url` | string | (currently unused) URL to use for the "Learn More" button on the Landing Page | `http://www.nationaldataservice.org/platform/workbench.html` |
 | `config.frontend.customization.help_links` | array | List of links to use in the navbar "Help" section | existing URLs |
 
-
+### Workbench Config: Backend
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
 | `config.backend.mongo.uri` | string | URI pointing at running MongoDB instance | `mongodb://workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs` |
