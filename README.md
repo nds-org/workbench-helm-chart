@@ -354,7 +354,7 @@ Clone the Git repository locally:
 $ git clone https://github.com/nds-org/workbench-helm-chart && cd workbench-helm-chart/
 ```
 
-You can then use the Makefile helper:
+You can then use the Makefile helper script:
 ```bash
 $ make help         # Print help message
 $ make check_all    # verify that dependencies are installed
@@ -362,6 +362,8 @@ $ make check_all    # verify that dependencies are installed
 
 To install/uninstall the chart:
 ```bash
+$ make dep          # Fetch Helm dependencies
+$ make template     # Debug the Helm chart template
 $ make install      # Install the Helm chart
 $ make uninstall    # Uninstall the Helm chart
 ```
@@ -379,14 +381,41 @@ $ make target=mongo logs
 
 To build/push local Docker images:
 ```bash
-$ make clone   # clone from git repos
-$ make pull    # pull from git upstream
-$ make build   # build docker images
-$ make push    # push to docker hub - note: this also performs a "make build"
+$ make clone    # clone from git repos
+$ make pull     # pull from git upstream
+$ make build    # build docker images
+$ make push     # push to docker hub - note: this also performs a "make build"
+$ make restart  # delete the running Pod so it restart with new docker images
 ```
 
+### Optional: Makefile Configuration
+Change the default parameters of the Makefile by editing the included `.env` file:
+```bash
+$ cat .env
+# Success/failure symbols
+SUCCESS=[✔]
+FAILED=[x]
 
-### Map source into running containers (local dev / hostpath only)
+# Helm chart config
+NAMESPACE=workbench
+NAME=workbench
+CHART_PATH=.
+
+# Docker image config
+APISERVER_IMAGE=ndslabs/apiserver:python
+WEBUI_IMAGE=ndslabs/webui:react
+
+# Upstream Git repo/branch config
+APISERVER_REPO=https://github.com/nds-org/workbench-apiserver-python
+WEBUI_REPO=https://github.com/nds-org/workbench-webui
+APISERVER_UPSTREAM_BRANCH=main
+WEBUI_UPSTREAM_BRANCH=main
+
+# Set this to empty to disable creating keycloak-realm ConfigMap
+REALM_IMPORT=realm_import
+```
+
+### Optional: Map source into running containers (local dev / hostpath only)
 Run `make clone` and `make pull` to grab the latest source code.
 
 Use your favorite IDE(s) or local tools use them to import the `src/webui` source code and run `yarn install && yarn build`, or you can also use `make compile`.
