@@ -1,5 +1,5 @@
 # Makefile defaults
-.PHONY: help usage clone pull build push all dep install uninstall status watch logs describe restart clean clean_all realm_import acmsdns_secret
+.PHONY: help usage clone pull build push all dep install uninstall template status watch logs describe restart clean clean_all realm_import acmsdns_secret
 .DEFAULT_GOAL := install 
 .SILENT: logs usage
 
@@ -44,7 +44,7 @@ define HELP_BODY
 
         To rebuild images locally:
           - `make clone` uses git to clone the target repos
-          - `make pull` pulls existing images (sanity check)
+          - `make pull` pulls upstream Git changes (sanity check)
           - <modify source locally>
           - `make push` (includes `make build`)
           - `make restart`
@@ -73,20 +73,24 @@ help:
 usage: help
 
 
-#######################
-# Git commands: clone  #
-#######################
+##############################
+# Git commands: clone, pull  #
+##############################
 clone:
-	if [ ! -d "src/" ]; then git clone $(APISERVER_REPO) src/apiserver/; git clone $(WEBUI_REPO) src/webui/; fi
+	if [ ! -d "src/" ]; then \
+	git clone $(APISERVER_REPO) src/apiserver/; \
+	git clone $(WEBUI_REPO) src/webui/; \
+	fi
 
+pull: clone
+	if [ -d "src/" ]; then \
+	cd src/apiserver/ && git pull origin main && cd  ../..; \
+	cd src/webui/ && git pull origin main && cd ../..; \
+	fi
 
-#######################################
-# Docker commands: pull, build, push  #
-#######################################
-pull:
-	docker pull $(APISERVER_IMAGE)
-	docker pull $(WEBUI_IMAGE)
-
+#################################
+# Docker commands: build, push  #
+#################################
 build: clone
 	docker build -t $(WEBUI_IMAGE) src/webui/
 	docker build -t $(APISERVER_IMAGE) src/apiserver/
@@ -96,9 +100,9 @@ push: build
 	docker push $(WEBUI_IMAGE)
 
 
-###########################################
-# Helm commands: dep, install, uninstall  #
-###########################################
+################################################
+# Helm commands: all, dep, install, uninstall  #
+################################################
 all: $(REALM_IMPORT) dep install
 
 dep:
@@ -109,6 +113,9 @@ install: $(REALM_IMPORT)
 
 uninstall:
 	helm uninstall --wait -n $(NAMESPACE) $(NAME)
+
+template:
+	helm template --debug --dry-run $(NAME) -n $(NAMESPACE) $(CHART_PATH)
 
 
 ##############################
