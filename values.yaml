@@ -93,7 +93,7 @@ config:
       help_links:
         - icon: "fa-info-circle"
           name: "Feature Overview"
-          url: https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview"
+          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview"
         - icon: "fa-question-circle"
           name: "FAQ"
           url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions"

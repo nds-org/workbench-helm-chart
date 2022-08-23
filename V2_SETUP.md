@@ -1,49 +1,114 @@
 # Workbench Helm chart
 
-## Getting Started
-To install the Helm chart, you can use:
+## Installing the Chart
+```bash
+% git clone https://github.com/nds-org/workbench-helm-chart && cd workbench-helm-chart/
+% helm dep up
+% helm upgrade --install workbench -n workbench --create-namespace .
+```
+
+You can also use the included Makefile helper:
 ```bash
 % make all        # fetch deps + Helm release
 # OR 
 % make
 ```
 
-This will use classic Helm commands behind the scenes:
-```bash
-% helm upgrade --install workbench -n workbench --create-namespace .
+## Uninstalling the Chart
+To shut down all Workbench dependencies, webui, and apiserver:
+```shell
+% helm uninstall workbench -n workbench
 ```
 
-## Cleanup
-To shut down all Workbench dependencies, webui, and apiserver:
+You can also use the included Makefile helper:
 ```bash
 % make uninstall
 ```
 
+
 NOTE: this does not shutdown or affect user services
 
-To **delete** all of the associated cluster volumes:
-```bash
-% make clean
-```
 
-NOTE: this will delete your Keycloak Realm and/or MongoDB database and all user data
+## Configuration Values
 
-(OPTIONAL) Last step is to delete the namespace that was created by the `helm install` step:
-```bash
-% make clean_all
-```
-
-NOTE: if you're using cert-manager, backup any necessary secrets to avoid being ratelimited by the LetsEncrypt API
+| Path | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `extraDeploy` | array | List of additional resources to create | `[]` |
+| `tolerations` | array | List of tolerations to include | `[]` |
+| `resources.api` | map | Resources to apply to `api` container | `{}` |
+| `resources.webui` | map | Resources to apply to `webui` container | `{}` |
+| `nodeSelector` | map | Node selector(s) to apply to `webui` container | `{}` |
+| `affinity` | map | Affinity to apply to `webui` container | `{}` |
 
 
+| Path | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `controller.kind` | string | Kind to use for application manifest | `Deployment` |
+| `controller.images.webui` | string | Image to use for `webui` container | `ndslabs/webui:react` |
+| `controller.images.apiserver` | string | Image to use for `apiserver` container | `ndslabs/webui:react` |
+| `controller.initContainers` | array[map] | Specify `initContainers` for main application | `[]` |
+| `controller.extraEnv.webui` | array[map] | Additional `env` to set for `webui` container | `[]` |
+| `controller.extraEnv.apiserver` | array[map] | Additional `env` variables to set for `apiserver` container | `[]` |
+| `controller.extraVolumeMounts.webui` | array[map] | Additional `volumeMounts` to set for `webui` container | `[]` |
+| `controller.extraVolumeMounts.apiserver` | array[map] | Additional `volumeMounts` to set for `apiserver` container | `[]` |
+| `controller.extraVolumes` | array[map] | Additional `volumes` to attach to the main application | `[]` |
 
-## Configuration
+| Path | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `ingress.class` | string | Class name for Ingress resources | `""` |
+| `ingress.tls` | array[map] | TLS config to set for Ingress resources | `[]` |
+| `ingress.tls.hosts` | array[string] | Host names to set for TLS on Ingress resource | `[]` |
+| `ingress.api.annotations` | map | Annotations to set for `api` Ingress resources | `{}` |
+| `ingress.webui.annotations` | map | Annotations to set for `webui` Ingress resources | `{}` |
 
-```
-TODO: table of values
-```
+| Path | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `config.frontend.signin_url` | string | URL to route frontend requests to "Log In"  | `https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F` |
+| `config.frontend.customization.product_name` | string | Human-friendly name to use for this product in the navbar | `Workbench` |
+| `config.frontend.customization.landing_html` | string | HTML string to use as the splash text on the Landing Page | existing HTML |
+| `config.frontend.customization.favicon_path` | string | Image to use as the favicon | `/favicon.svg` |
+| `config.frontend.customization.brand_logo_path` | string | Image to use as the brand log (top-left of navbar) | `/favicon.svg` |
+| `config.frontend.customization.learn_more_url` | string | (currently unused) URL to use for the "Learn More" button on the Landing Page | `http://www.nationaldataservice.org/platform/workbench.html` |
+| `config.frontend.customization.help_links` | array | List of links to use in the navbar "Help" section | existing URLs |
+
+
+| Path | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `config.backend.mongo.uri` | string | URI pointing at running MongoDB instance | `mongodb://workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs` |
+| `config.backend.mongo.db` | string | Database name to use in MongoDB | `ndslabs` |
+| `config.backend.mongo.keycloak.hostname` | string | URI pointing at running Keycloak instance | `https://kubernetes.docker.internal/auth` |
+| `config.backend.keycloak.realmName` | string | Realm name to use in Keycloak | `workbench-dev` |
+| `config.backend.keycloak.clientId` | string | OIDC ClientID to use for Keycloak auth | `workbench-local` |
+| `config.backend.keycloak.clientSecret` | string | OIDC ClientSecret to use for Keycloak auth | `""` |
+| `config.backend.domain` | string | Domain name (used by backend for self-reference) | `kubernetes.docker.internal` |
+| `config.backend.insecure_ssl_verify` | string | If `false`, skip checking insecure/invalid TLS certificates | `true` |
+| `config.backend.storage.home.storage_class` | string | StorageClass to use for user Home volumes | `nfs` |
+| `config.backend.storage.home.claim_suffix` | string | Suffix to append to names of user Home volumes | `-home` |
+| `config.backend.storage.shared.enabled` | bool | If true, mount a Shared volume to each UserApp | `false` |
+| `config.backend.storage.shared.volume_path` | string | Path within the container to mount the Shared volume | `/tmp/shared` |
+| `config.backend.storage.shared.read_only` | bool | If true, mount the Shared volume as ReadOnly | `true` |
+
+
+### Currently Unused?
+| Path | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `config.backend.timeout` | int | (currently unused) startup timeout for UserApps | `30` |
+| `config.backend.inactivity_timeout` | int | (currently unused) Shut down inactive services after this many minutes | `480` |
+| `config.backend.specs.repo` | string | (currently unused) Git repo from which to pull application specs | `https://github.com/nds-org/ndslabs-specs.git` |
+| `config.backend.specs.branch` | string | (currently unused) Git branch from which to pull application specs | `master` |
+| `config.backend.storage.shared.storage_class` | string | (currently unused) StorageClass used to create the Shared volume | `nfs` |
+
+| Path | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `ingress.userapps.annotations` | map | Annotations to set for Ingress resources of created UserApps | `{}` |
+
 
 ## Dependencies
+* [MongoDB](https://artifacthub.io/packages/helm/bitnami/mongodb)
+* [Keycloak](https://artifacthub.io/packages/helm/bitnami/keycloak)
+* [OAuth2 Proxy](https://artifacthub.io/packages/helm/bitnami/oauth2-proxy)
+* [NFS Client Provisioner](https://artifacthub.io/packages/helm/supertetelman/nfs-client-provisioner)
+* [NFS Server Provisioner]()
 
 ### MongoDB
 
@@ -72,6 +137,11 @@ To run a local `keycloak` alongside Workbench, you can set `keycloak.enabled` to
 ```yaml
 keycloak:
   enabled: true
+  httpRelativePath: "/auth/"
+  auth:
+     adminUser: "admin"
+     adminPassword: "workbench"
+  proxyAddressForwarding: true
   # ... include any other config values from the keycloak chart
 ```
 
@@ -110,6 +180,8 @@ For more info about configuring specific providers, see https://oauth2-proxy.git
 You'll need a StorageClass on your cluster that supports ReadWriteMany.
 
 If you already have a volume provisioner running that supports ReadWriteMany, you can skip this section.
+
+NOTE: You should only need the client OR the server, but you do not need both running.
 
 #### NFS Client Provisioner: use an existing NFS server to provision RWM volumes
 
@@ -320,6 +392,31 @@ Now you can modify the `webui` or `apiserver` in any way that you see fit, then 
 NOTE: You'll need to re-run `yarn build` after any modifications to the `webui`.
 
 This will trigger the build step (during which you will get a 500 error) that will refresh the files in `src/webui/build`.
+
+## Cleaning Up
+To **delete** all of the associated cluster volumes:
+```bash
+% kubectl delete pvc --all -n workbench
+```
+
+```bash
+% make clean
+```
+
+NOTE: this will delete your Keycloak Realm and/or MongoDB database and all user data
+
+(OPTIONAL) Last step is to delete the namespace that was created by the `helm install` step:
+```bash
+% kubectl delete namespace workbench
+```
+
+You can also use the included Makefile helper:
+```bash
+% make clean_all
+```
+
+NOTE: if you're using cert-manager, backup any necessary secrets to avoid being ratelimited by the LetsEncrypt API
+
 
 ## TODO
 * ~~`wait-for` startup ordering for `keycloak` <- `oauth2-proxy` + `apiserver` (OIDC discovery)~~
