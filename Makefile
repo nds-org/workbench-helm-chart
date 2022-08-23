@@ -3,60 +3,15 @@
 .DEFAULT_GOAL := install 
 .SILENT: logs usage help check_helm check_kubectl check_git check_docker check_yarn check_all check_required check_optional
 
-SUCCESS=[✔]
-FAILED=[x]
-
-# Helm chart config
-NAMESPACE=workbench
-NAME=workbench
-CHART_PATH=.
-
-# Docker image config
-APISERVER_IMAGE=ndslabs/apiserver:python
-WEBUI_IMAGE=ndslabs/webui:react
-
-# Git repo config
-APISERVER_REPO=https://github.com/nds-org/workbench-apiserver-python
-WEBUI_REPO=https://github.com/nds-org/workbench-webui
+# Import configuration from .env
+include .env
+export
 
 # Set this to empty to disable creating keycloak-realm ConfigMap
-REALM_IMPORT=realm_import
+#REALM_IMPORT=realm_import
 
 define HELP_BODY
         Workbench Helm chart deployment helper Makefile
-
-        REQUIRED CONFIG:
-          - set NAME= and NAMESPACE= at top of the file to match where you want to release with Helm
-          - set APISERVER_IMAGE and WEBUI_IMAGE to names of built Docker images
-          - set APISERVER_REPO and WEBUI_REPO to URLs of target git repos (for Git + Docker workflows)
-
-        OPTIONAL CONFIG:
-          - enable keycloak-realm ConfigMap creating by setting REALM_IMPORT=realm_import
-          - disable keycloak-realm ConfigMap creating by setting REALM_IMPORT=""
-
-        To install Workbench:
-          - `make help` or `make usage` prints this message  <-- you are here
-          - <modify values.yaml locally>
-          - `make realm_import` (optional: sets up the workbench-dev sample realm import for keycloak first startup)
-          - `make all` to run both `make dep` and `make install`
-          - `make dep` to pull Helm dependency subcharts
-          - `make` or `make install` (optionally includes `make realm_import`) to perform Helm install and/or upgrade
-          - `make status` or `make watch` to check Pod status or watch for changes to Pods
-          - `make describe` to check Pod events for startup errors
-          - `make target=api logs` or `make target=proxy logs` to check Pod logs for runtime errors
-
-        To rebuild images locally:
-          - `make clone` uses git to clone the target repos
-          - `make pull` pulls upstream Git changes (sanity check)
-          - <modify source locally>
-          - `make push` (includes `make build`)
-          - `make restart`
-
-        To uninstall Workbench:
-          - `make uninstall`
-          - `make clean` (WARNING: this will delete all persistent volumes from your namespace)
-          - `make clean_all` (WARNING: this will delete your entire namespace)
-
 
         Dependencies:
           - `make`
@@ -66,6 +21,46 @@ define HELP_BODY
           - `git` (optional)
           - `yarn` (optional)
 
+        OPTIONAL CONFIG (see .env):
+          - change NAME= and NAMESPACE= to match where you want to release with Helm (default: workbench)
+          - set APISERVER_IMAGE and WEBUI_IMAGE to names of target names of Docker images
+          - set APISERVER_REPO and WEBUI_REPO to URLs of target git repos (for local chart development)
+          - set APISERVER_UPSTREAM_BRANCH and WEBUI_UPSTREAM_BRANCH to names of target git branches (default: main, for local chart development)
+          - enable keycloak-realm ConfigMap creating by setting REALM_IMPORT=realm_import
+          - disable keycloak-realm ConfigMap creating by setting REALM_IMPORT=""
+
+        General Usage:
+          - `make check_all` ensure that all dependencies are installed and ready
+          - `make help` or `make usage` prints this message  <-- you are here
+
+        To install Workbench:
+          - <modify values.yaml locally>
+          - `make all` to run both `make dep` and `make install`
+          - `make dep` to pull Helm dependency subcharts
+          - `make template` to perform a dry-run of Helm chart generation (for debugging)
+          - `make` or `make install` to perform Helm install and/or upgrade (optionally includes `make realm_import`, enabled by default)
+          - `make status` or `make watch` to check status or watch for changes to Pods
+          - `make describe` to check Pod events for startup errors
+          - `make target=api logs` or `make target=proxy logs` to check Pod logs for runtime errors
+
+        To rebuild images locally:
+          - `make clone` uses git to clone the target repos
+          - `make pull` pulls upstream Git changes (sanity check)
+          - <modify source locally>
+          - `make compile` uses yarn to locally recompile the webui source code
+          - `make push` (includes `make build`) to push newly-built Docker images
+          - `make restart` will delete the running Pod so one is started running the new images
+
+        To uninstall Workbench:
+          - `make uninstall`
+          - `make clean` (WARNING: DEBUG ONLY - this will delete all persistent volumes from your namespace)
+          - `make clean_all` (WARNING: DEBUG ONLY - this will delete your entire namespace)
+
+        Misc functions:
+          - `make realm_import` (optional, enabled by default: creates a ConfigMap that can be mounted into keycloak to import a test realm)
+          - `make acmedns_secret` (optional: creates a Secret that can be loaded into cert-manager for use by ACMEDNS)
+
+        
 endef
 
 
@@ -140,8 +135,8 @@ clone: check_git
 
 pull: clone
 	if [ -d "src/" ]; then \
-	(cd src/apiserver/ && git pull origin main) \
-	(cd src/webui/ && git pull origin main) \
+	(cd src/apiserver/ && git pull origin $(APISERVER_UPSTREAM_BRANCH)) \
+	(cd src/webui/ && git pull origin $(WEBUI_UPSTREAM_BRANCH)) \
 	fi
 
 compile: check_yarn

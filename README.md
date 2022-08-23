@@ -3,45 +3,36 @@
 
 ## TL;DR
 ```bash
-% helm dep up
-% helm upgrade --install workbench -n workbench --create-namespace .
+$ git clone https://github.com/nds-org/workbench-helm-chart && cd workbench-helm-chart/ 
+$ helm dep up
+$ helm upgrade --install workbench -n workbench --create-namespace .
 ```
 
 ## Introduction
 This chart bootstraps a Workbench [webui](https://github.com/nds-org/workbench-webui) and [apiserver](https://github.com/nds-org/workbench-apiserver-python) on a [Kubernetes](http://kubernetes.io/) cluster using the [Helm](https://helm.sh/) package manager.
 
 ## Prerequisites
-* Running: Kubernetes 1.22+
-* Installed: `kubectl` + `helm` v3 (required)
-* Installed: `docker` + `git` (optional, for local docker builds)
-* Installed: `yarn` (optional, for local dev/compilation)
+* Kubernetes 1.22+
+* `helm` v3.7.0 or later (required)
+* `make` + `kubectl` `docker` + `git` (optional, for [Developing the Chart](README.md#developing-the-chart-optional))
+* `yarn` (optional, for local dev/compilation)
 
 ## Installing the Chart
-Download dependency subcharts and install a new Helm release:
+Download dependency subcharts by running the following:
 ```bash
-% helm dep up
-% helm upgrade --install workbench -n workbench --create-namespace .
+$ helm dep up
 ```
-
-You can also use the included Makefile helper:
+Then install a new release with Helm:
 ```bash
-% make all        # fetch deps + Helm release
-# OR 
-% make
+$ helm upgrade --install workbench -n workbench --create-namespace .
 ```
 
 ## Uninstalling the Chart
 To shut down all Workbench dependencies, webui, and apiserver:
 ```shell
-% helm uninstall workbench -n workbench
+$ helm uninstall workbench -n workbench
 ```
-
 NOTE: this does not shutdown or affect UserApps
-
-You can also use the included Makefile helper:
-```bash
-% make uninstall
-```
 
 ## Configuration
 The following table lists the configurable parameters of the Workbench chart and their default values.
@@ -146,11 +137,6 @@ mongodb:
 
 See https://artifacthub.io/packages/helm/bitnami/mongodb for configuration options
 
-To debug problems with mongodb:
-```bash
-% make target=mongo logs
-```
-
 For more info about MongoDB, see https://www.mongodb.com/docs/manual/tutorial/getting-started/
 
 ### Keycloak + PostgreSQL
@@ -169,11 +155,6 @@ keycloak:
 
 See https://artifacthub.io/packages/helm/bitnami/keycloak for configuration options
 
-To debug problems with keycloak:
-```bash
-% make target=keycloak logs
-```
-
 For more info about Keycloak, see https://www.keycloak.org/docs/11.0/getting_started/
 
 ### OAuth2 Proxy [+ Redis]
@@ -188,11 +169,6 @@ oauth2-proxy:
 ```
 
 See https://artifacthub.io/packages/helm/bitnami/oauth2-proxy for configuration options
-
-To debug problems with oauth2-proxy login (403, 500, etc):
-```bash
-% make target=proxy logs
-```
 
 For more info about OAuth2 Proxy, see https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview
 
@@ -240,12 +216,9 @@ ingress-nginx:
 
 See https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx for configuration options
 
-To debug problems with nginx (502, 503, 500, etc):
-```bash
-% make target=nginx logs
-```
 
 For more info about NGINX Ingress Controller, see https://kubernetes.github.io/ingress-nginx/deploy/
+
 
 ## Advanced Configuration (Optional)
 
@@ -294,13 +267,13 @@ When you are ready (after testing) to move from [staging](https://letsencrypt.or
 #### DNS-01 via ACMEDNS
 If your provider does not support DNS-01 requests (e.g. Google Domains), you can use ACMEDNS:
 1. Register with acmedns for a unique set of credentials: `curl -XPOST https://auth.acme-dns.io/register`
-    * This will return a set of credentials as a JSON blob:
+   * This will return a set of credentials as a JSON blob:
 ```json
 {"username":"_username_","password":"_password_","fulldomain":"_id_.auth.acme-dns.io","subdomain":"_id_","allowfrom":[]}
 ```
 
 2. Build up an `acmedns.json` file using this JSON blob:
-    * You'll need to copy and paste this JSON value multiple times to build it up:
+   * You'll need to copy and paste this JSON value multiple times to build it up:
 ```json
 {
   "local.ndslabs.org": {"username":"_username_","password":"_password_","fulldomain":"_id_.auth.acme-dns.io","subdomain":"_id_","allowfrom":[]},
@@ -309,7 +282,7 @@ If your provider does not support DNS-01 requests (e.g. Google Domains), you can
 ```
 3. Create a secret from the `acmedns.json` file:
 ```bash
-% kubectl create secret -n cert-manager acme-dns --from-file=acmedns.json`
+$ kubectl create secret -n cert-manager acme-dns --from-file=acmedns.json`
 ```
 
 4. Point an Issuer at the `acme-dns` secret:
@@ -353,7 +326,7 @@ ingress:
 ### Keycloak Realm Import
 Download and import realm.json for a preconfigured `workbench-dev` realm:
 ```bash
-% kubectl create configmap keycloak-realm --from-file=realm.json -n workbench
+$ kubectl create configmap keycloak-realm --from-file=realm.json -n workbench
 ```
 
 Then add the following to your `values.yaml`:
@@ -374,10 +347,49 @@ Then add the following to your `values.yaml`:
           path: "realm.json"
 ```
 
+
+## Developing the Chart (Optional)
+Clone the Git repository locally:
+```bash
+$ git clone https://github.com/nds-org/workbench-helm-chart && cd workbench-helm-chart/
+```
+
+You can then use the Makefile helper:
+```bash
+$ make help         # Print help message
+$ make check_all    # verify that dependencies are installed
+```
+
+To install/uninstall the chart:
+```bash
+$ make install      # Install the Helm chart
+$ make uninstall    # Uninstall the Helm chart
+```
+
+To debug Pods startup/runtime:
+```bash
+$ make describe
+$ make target=api logs
+$ make target=webui logs
+$ make target=nginx logs
+$ make target=proxy logs
+$ make target=keycloak logs
+$ make target=mongo logs
+```
+
+To build/push local Docker images:
+```bash
+$ make clone   # clone from git repos
+$ make pull    # pull from git upstream
+$ make build   # build docker images
+$ make push    # push to docker hub - note: this also performs a "make build"
+```
+
+
 ### Map source into running containers (local dev / hostpath only)
 Run `make clone` and `make pull` to grab the latest source code.
 
-Use your favorite IDE(s) or local tools use them to import the `src/webui` source code and run `yarn build`.
+Use your favorite IDE(s) or local tools use them to import the `src/webui` source code and run `yarn install && yarn build`, or you can also use `make compile`.
 
 This will produce a new folder `src/webui/build` containing compiled artifacts that can be mounted directly into the running `webui` container.
 
@@ -417,26 +429,18 @@ NOTE: You'll need to re-run `yarn build` after any modifications to the `webui`.
 
 This will trigger the build step (during which you will get a 500 error) that will refresh the files in `src/webui/build`.
 
-## Cleaning Up
+
+### Cleaning Up
 To **delete** all of the associated cluster volumes:
 ```bash
-% kubectl delete pvc --all -n workbench
-```
-
-```bash
-% make clean
+$ make clean
 ```
 
 NOTE: this will delete your Keycloak Realm and/or MongoDB database and all user data
 
 (OPTIONAL) Last step is to delete the namespace that was created by the `helm install` step:
 ```bash
-% kubectl delete namespace workbench
-```
-
-You can also use the included Makefile helper:
-```bash
-% make clean_all
+$ make clean_all
 ```
 
 NOTE: if you're using cert-manager, backup any necessary secrets to avoid being ratelimited by the LetsEncrypt API
