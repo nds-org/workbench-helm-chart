@@ -155,10 +155,47 @@ For more info about NGINX Ingress Controller, see https://kubernetes.github.io/i
 
 ### Enable TLS with Wildcard DNS certs
 1. Install `cert-manager` Helm chart: `jetstack/cert-manager`
-2. Add an Issuer that support DNS-01 (see below)
-3. Include `tls` section in the top-level `ingress` section of `values.yaml`
+2. Add an Issuer that support DNS-01 (see below):
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Issuer 
+metadata:
+  name: letsencrypt-staging
+  namespace: workbench
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: email@example.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    # Enable the DNS-01 challenge provider
+    solvers:
+    - dns01:
+        # ...
+```
+3. Include `tls` section in the top-level `ingress` section of `values.yaml`:
+```yaml
+ingress:
+  class: "nginx"
+  tls:
+    - hosts:
+      - "local.ndslabs.org"
+      - "*.local.ndslabs.org"
+```
 
-#### ACMEDNS
+WARNING: Do not include the same `issuer` or `cluster-issuer` annotation on multiple ingress rules.
+
+WARNING: LetsEncrypt will [rate limit](https://letsencrypt.org/docs/rate-limits/) you if you request too many certs are requested for the same domain.
+
+To avoid this, use the [staging environment](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) (as above) for testing.
+
+When you are ready (after testing) to move from [staging](https://letsencrypt.org/docs/staging-environment/) to real certs, you can use the [production environment](https://community.letsencrypt.org/t/acme-v2-production-environment-wildcards/55578).
+
+
+#### DNS-01 via ACMEDNS
 If your provider does not support DNS-01 requests (e.g. Google Domains), you can use ACMEDNS:
 1. Register with acmedns for a unique set of credentials: `curl -XPOST https://auth.acme-dns.io/register`
     * This will return a set of credentials as a JSON blob:
@@ -170,13 +207,51 @@ If your provider does not support DNS-01 requests (e.g. Google Domains), you can
     * You'll need to copy and paste this JSON value multiple times to build it up:
 ```json
 {
-      "local.ndslabs.org": {"username":"_username_","password":"_password_","fulldomain":"_id_.auth.acme-dns.io","subdomain":"_id_","allowfrom":[]},
-      "*.local.ndslabs.org": {"username":"_username_","password":"_password_","fulldomain":"_id_.auth.acme-dns.io","subdomain":"_id_","allowfrom":[]}
+  "local.ndslabs.org": {"username":"_username_","password":"_password_","fulldomain":"_id_.auth.acme-dns.io","subdomain":"_id_","allowfrom":[]},
+  "*.local.ndslabs.org": {"username":"_username_","password":"_password_","fulldomain":"_id_.auth.acme-dns.io","subdomain":"_id_","allowfrom":[]}
 }
 ```
 3. Create a secret from the `acmedns.json` file:
 ```bash
 % kubectl create secret -n cert-manager acme-dns --from-file=acmedns.json`
+```
+
+4. Point an Issuer at the `acme-dns` secret:
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-staging
+  namespace: workbench
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: email@example.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+    - dns01:
+        acmeDNS:
+          host: https://auth.acme-dns.io
+          accountSecretRef:
+            name: acme-dns
+            key: acmedns.json 
+```
+
+5. Add the issuer annotation to your `ingress.api.annotations` section:
+```yaml
+ingress:
+  class: "nginx"
+  tls:
+    # ....
+  api:
+    annotations:
+      cert-manager.io/issuer: "acmedns-staging"
+      ingress.kubernetes.io/ssl-redirect: "true"
+      ingress.kubernetes.io/force-ssl-redirect: "true"
 ```
 
 ### Keycloak Realm Import
@@ -252,3 +327,4 @@ This will trigger the build step (during which you will get a 500 error) that wi
 * Verbose configuration documentation
 * Adjust webui to speak `_oauth2_proxy` instead of / addition in speaking `keycloak` for OIDC
 * MongoDB replication
+* Git release workflows? CI? Github Actions?
