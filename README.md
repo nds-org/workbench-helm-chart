@@ -418,7 +418,7 @@ REALM_IMPORT=realm_import
 ### Optional: Map source into running containers (local dev / hostpath only)
 Run `make clone` and `make pull` to grab the latest source code.
 
-Use your favorite IDE(s) or local tools use them to import the `src/webui` source code and run `yarn install && yarn build`, or you can also use `make compile`.
+Use your favorite IDE(s) or local tools use them to import the `src/webui` source code and run `make compile`.
 
 This will produce a new folder `src/webui/build` containing compiled artifacts that can be mounted directly into the running `webui` container.
 
@@ -454,7 +454,7 @@ controller:
 
 Now you can modify the `webui` or `apiserver` in any way that you see fit, then navigate to https://kubernetes.docker.internal to immediately test your changes.
 
-NOTE: You'll need to re-run `yarn build` after any modifications to the `webui`.
+NOTE: You'll need to re-run `make compile` after any modifications to the `webui`.
 
 This will trigger the build step (during which you will get a 500 error) that will refresh the files in `src/webui/build`.
 
