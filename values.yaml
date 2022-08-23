@@ -4,6 +4,19 @@
 
 ### Kubernetes deployment options
 
+extraDeploy:
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: test-pvc-deleteme
+    namespace: workbench
+  spec:
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: 1Mi
+
 controller:
   kind: Deployment   # default: Deployment
   images:
@@ -16,6 +29,30 @@ controller:
       args:
         - "pod"
         - "-lapp.kubernetes.io/component=keycloak"
+
+  extraEnv:
+    webui: []
+    apiserver:
+    - name: DEBUG
+      value: "true"
+
+
+  extraVolumeMounts:
+    webui:
+    - mountPath: /usr/share/nginx/html/
+      name: webuisrc
+    apiserver:
+    - mountPath: /app/
+      name: apisrc
+
+  extraVolumes:
+    - name: webuisrc
+      hostPath:
+        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/webui/build
+    - name: apisrc
+      hostPath:
+        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/apiserver
+
   #labels:
   #  manager: workbench
   #strategy_type: "Recreate"  # default: RollingUpdate
@@ -44,9 +81,9 @@ ingress:
       ingress.kubernetes.io/app-root: "/"
       ingress.kubernetes.io/ssl-redirect: "true"
       ingress.kubernetes.io/force-ssl-redirect: "true"
-      nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
-      nginx.ingress.kubernetes.io/auth-signin: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
-      nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email"
+      #nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
+      #nginx.ingress.kubernetes.io/auth-signin: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
+      #nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email"
   # TODO: currently unused 
   userapps:
 
@@ -265,10 +302,10 @@ oauth2-proxy:
     - --force-json-errors=true
   ingress:
     enabled: true
-    className: nginx
+    ingressClassName: nginx
     path: /oauth2/
-    hosts:
-      - kubernetes.docker.internal
+    pathtype: Prefix
+    hostname: kubernetes.docker.internal
     tls:
       - hosts:
           - kubernetes.docker.internal
@@ -276,12 +313,17 @@ oauth2-proxy:
 
 mongodb:
   enabled: true
-  #useStatefulSet: true
   architecture: standalone   # WARNING: experimental
+  #replicaCount: 3
+  service:
+    type: NodePort
+    nodePorts:
+      mongodb: 30017
   auth:
-    replicaSetKey: "workbenchauthtoken12345"
-    rootPassword: "workbench"
-  replicaCount: 3
+    replicaSetKey: changeme
+    rootUser: workbench
+    rootPassword: workbench
+
   # TODO: Test AWS + GKE PVs
   persistent:
     # Values can be "false" for no persistent storage, "aws" for awsElasticBlockStore,
