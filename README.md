@@ -1,8 +1,24 @@
 # Workbench Helm chart
+[NDS Labs Workbench](http://www.nationaldataservice.org/platform/workbench.html) is an open-source platform for hosting and launching pre-packages apps for educational or workshop environments.
+
+## TL;DR
+```bash
+% helm dep up
+% helm upgrade --install workbench -n workbench --create-namespace .
+```
+
+## Introduction
+This chart bootstraps a Workbench [webui](https://github.com/nds-org/workbench-webui) and [apiserver](https://github.com/nds-org/workbench-apiserver-python) on a [Kubernetes](http://kubernetes.io/) cluster using the [Helm](https://helm.sh/) package manager.
+
+## Prerequisites
+* Running: Kubernetes 1.22+
+* Installed: `kubectl` + `helm` v3 (required)
+* Installed: `docker` + `git` (optional, for local docker builds)
+* Installed: `yarn` (optional, for local dev/compilation)
 
 ## Installing the Chart
+Download dependency subcharts and install a new Helm release:
 ```bash
-% git clone https://github.com/nds-org/workbench-helm-chart && cd workbench-helm-chart/
 % helm dep up
 % helm upgrade --install workbench -n workbench --create-namespace .
 ```
@@ -27,18 +43,12 @@ You can also use the included Makefile helper:
 % make uninstall
 ```
 
-## Configuration Values
-
-| Path | Type | Description | Default |
-| ---- | ---- | ----------- | ------- |
-| `extraDeploy` | array | List of additional resources to create | `[]` |
-| `tolerations` | array | List of tolerations to include | `[]` |
-| `resources.api` | map | Resources to apply to `api` container | `{}` |
-| `resources.webui` | map | Resources to apply to `webui` container | `{}` |
-| `nodeSelector` | map | Node selector(s) to apply to `webui` container | `{}` |
-| `affinity` | map | Affinity to apply to `webui` container | `{}` |
+## Configuration
+The following table lists the configurable parameters of the Workbench chart and their default values.
 
 ### Controller
+These options affect the Deployment resource created by this chart.
+
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
 | `controller.kind` | string | Kind to use for application manifest | `Deployment` |
@@ -52,6 +62,8 @@ You can also use the included Makefile helper:
 | `controller.extraVolumes` | array[map] | Additional `volumes` to attach to the main application | `[]` |
 
 ### Ingress
+These options affect the Ingress resources created by this chart.
+
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
 | `ingress.class` | string | Class name for Ingress resources | `""` |
@@ -60,7 +72,9 @@ You can also use the included Makefile helper:
 | `ingress.api.annotations` | map | Annotations to set for `api` Ingress resources | `{}` |
 | `ingress.webui.annotations` | map | Annotations to set for `webui` Ingress resources | `{}` |
 
-### Workbench Config: Frontend
+### Workbench Options
+These options affect the internals of Workbench and the customization of the WebUI.
+
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
 | `config.frontend.signin_url` | string | URL to route frontend requests to "Log In"  | `https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F` |
@@ -70,10 +84,6 @@ You can also use the included Makefile helper:
 | `config.frontend.customization.brand_logo_path` | string | Image to use as the brand log (top-left of navbar) | `/favicon.svg` |
 | `config.frontend.customization.learn_more_url` | string | (currently unused) URL to use for the "Learn More" button on the Landing Page | `http://www.nationaldataservice.org/platform/workbench.html` |
 | `config.frontend.customization.help_links` | array | List of links to use in the navbar "Help" section | existing URLs |
-
-### Workbench Config: Backend
-| Path | Type | Description | Default |
-| ---- | ---- | ----------- | ------- |
 | `config.backend.mongo.uri` | string | URI pointing at running MongoDB instance | `mongodb://workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs` |
 | `config.backend.mongo.db` | string | Database name to use in MongoDB | `ndslabs` |
 | `config.backend.mongo.keycloak.hostname` | string | URI pointing at running Keycloak instance | `https://kubernetes.docker.internal/auth` |
@@ -88,8 +98,22 @@ You can also use the included Makefile helper:
 | `config.backend.storage.shared.volume_path` | string | Path within the container to mount the Shared volume | `/tmp/shared` |
 | `config.backend.storage.shared.read_only` | bool | If true, mount the Shared volume as ReadOnly | `true` |
 
+### Misc
+Other miscellaneous top-level configuration options.
+
+| Path | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `extraDeploy` | array | List of additional resources to create | `[]` |
+| `tolerations` | array | List of tolerations to include | `[]` |
+| `resources.api` | map | Resources to apply to `api` container | `{}` |
+| `resources.webui` | map | Resources to apply to `webui` container | `{}` |
+| `nodeSelector` | map | Node selector(s) to apply to `webui` container | `{}` |
+| `affinity` | map | Affinity to apply to `webui` container | `{}` |
+
 
 ### Currently Unused?
+These options are currently present, but may not yet be used.
+
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
 | `config.backend.timeout` | int | (currently unused) startup timeout for UserApps | `30` |
@@ -97,13 +121,10 @@ You can also use the included Makefile helper:
 | `config.backend.specs.repo` | string | (currently unused) Git repo from which to pull application specs | `https://github.com/nds-org/ndslabs-specs.git` |
 | `config.backend.specs.branch` | string | (currently unused) Git branch from which to pull application specs | `master` |
 | `config.backend.storage.shared.storage_class` | string | (currently unused) StorageClass used to create the Shared volume | `nfs` |
-
-| Path | Type | Description | Default |
-| ---- | ---- | ----------- | ------- |
 | `ingress.userapps.annotations` | map | Annotations to set for Ingress resources of created UserApps | `{}` |
 
 
-## Dependencies
+## Subcharts
 * [MongoDB](https://artifacthub.io/packages/helm/bitnami/mongodb)
 * [Keycloak](https://artifacthub.io/packages/helm/bitnami/keycloak)
 * [OAuth2 Proxy](https://artifacthub.io/packages/helm/bitnami/oauth2-proxy)
@@ -117,10 +138,10 @@ To run a local `mongodb` alongside Workbench, you can set `mongodb.enabled` to `
 ```yaml
 mongodb:
   enabled: true
+  # ... include any other config values from the mongodb chart
   auth:
     rootUser: workbench
     rootPassword: workbench
-  # ... include any other config values from the mongodb chart
 ```
 
 See https://artifacthub.io/packages/helm/bitnami/mongodb for configuration options
@@ -138,12 +159,12 @@ To run a local `keycloak` alongside Workbench, you can set `keycloak.enabled` to
 ```yaml
 keycloak:
   enabled: true
+  # ... include any other config values from the keycloak chart
   httpRelativePath: "/auth/"
   auth:
      adminUser: "admin"
      adminPassword: "workbench"
   proxyAddressForwarding: true
-  # ... include any other config values from the keycloak chart
 ```
 
 See https://artifacthub.io/packages/helm/bitnami/keycloak for configuration options
@@ -161,9 +182,9 @@ To run a local [OAuth2 Proxy](https://artifacthub.io/packages/helm/bitnami/oauth
 ```yaml
 oauth2-proxy:
   enabled: true
+  # ... include any other config values from the oauth2-proxy chart
   extraArgs:
     - --provider=keycloak-oidc
-  # ... include any other config values from the oauth2-proxy chart
 ```
 
 See https://artifacthub.io/packages/helm/bitnami/oauth2-proxy for configuration options
@@ -213,6 +234,8 @@ To run a local [NGINX Ingress Controller](https://kubernetes.github.io/ingress-n
 ingress-nginx:
   enabled: true
   # ... include any other config values from the ingress-nginx chart
+  controller:
+    kind: Deployment
 ```
 
 See https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx for configuration options

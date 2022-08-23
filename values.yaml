@@ -304,10 +304,6 @@ mongodb:
   enabled: true
   architecture: standalone   # WARNING: experimental
   #replicaCount: 3
-  service:
-    type: NodePort
-    nodePorts:
-      mongodb: 30017
   auth:
     replicaSetKey: changeme
     rootUser: workbench
