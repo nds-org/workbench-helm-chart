@@ -32,7 +32,7 @@ spec:
 # Service Account Name
 {{- with .Values.controller.serviceAccountName }}
       serviceAccountName: {{ .Values.controller.serviceAccountName }}
-{{- else}}
+{{- else }}
       serviceAccountName: {{ .Release.Name }}
 {{- end }}
 
@@ -42,28 +42,35 @@ spec:
 {{ toYaml . | indent 8 }}
 {{- end }}
 
-{{- with .Values.controller.initContainers}}
+{{- with .Values.controller.initContainers }}
       initContainers:
 {{ toYaml . | indent 8 }}
 {{- end }}
 
       volumes:
-       - name: frontend-config
-         configMap:
-           name: {{ .Release.Name }}
-           items:
-            - key: frontend.json
-              path: frontend.json
-       - name: backend-config
-         configMap:
-           name: {{ .Release.Name }}
-           items:
-            - key: backend.json
-              path: backend.json
+      - name: frontend-config
+        configMap:
+          name: {{ .Release.Name }}
+          items:
+          - key: frontend.json
+            path: frontend.json
+      - name: backend-config
+        configMap:
+          name: {{ .Release.Name }}
+          items:
+          - key: backend.json
+            path: backend.json
+{{- with .Values.controller.extraVolumes }}
+{{ toYaml . | indent 6 }}
+{{- end }}
       containers:
       - name: webui
         image: {{ required "Must specify an image for controller.images.webui" .Values.controller.images.webui }}
         imagePullPolicy: Always
+{{- with .Values.controller.extraEnv.webui }}
+        env:
+{{ toYaml . | indent 10 }}
+{{- end }}
         ports:
         - containerPort: 80
           name: webui
@@ -71,8 +78,13 @@ spec:
         - name: frontend-config
           mountPath: /usr/share/nginx/html/frontend.json
           subPath: frontend.json
+{{- with .Values.controller.extraVolumeMounts.webui }}
+{{ toYaml . | indent 8 }}
+{{- end }}
         resources:
-{{ toYaml .Values.resources.webui | indent 10 }}
+{{- with .Values.resources.webui }}
+{{ toYaml . | indent 10 }}
+{{- end }}
 
       - name: apiserver
         image: {{ required "Must specify an image for controller.images.apiserver" .Values.controller.images.apiserver }}
@@ -84,6 +96,9 @@ spec:
         - name: backend-config
           mountPath: /app/env/backend.json
           subPath: backend.json
+{{- with .Values.controller.extraVolumeMounts.apiserver }}
+{{ toYaml . | indent 8 }}
+{{- end }}
         env:
           - name: CONFIG_HASH
             valueFrom:
@@ -101,6 +116,9 @@ spec:
             value: "{{ .Values.config.backend.keycloak.clientSecret | default "" }}"
           - name: INSECURE_SSL_VERIFY
             value: "{{ .Values.config.backend.insecure_ssl_verify | default true }}"
+{{- with .Values.controller.extraEnv.apiserver }}
+{{ toYaml . | indent 10 }}
+{{- end }}
 
         readinessProbe:
           httpGet:
