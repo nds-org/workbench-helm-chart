@@ -4,18 +4,7 @@
 
 ### Kubernetes deployment options
 
-extraDeploy:
-- kind: PersistentVolumeClaim
-  apiVersion: v1
-  metadata:
-    name: test-pvc-deleteme
-    namespace: workbench
-  spec:
-    accessModes:
-      - ReadWriteMany
-    resources:
-      requests:
-        storage: 1Mi
+extraDeploy: []
 
 controller:
   kind: Deployment   # default: Deployment
