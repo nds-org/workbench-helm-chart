@@ -9,9 +9,11 @@ extraDeploy: []
 controller:
   kind: Deployment   # default: Deployment
   images:
-    #webui: "ndslabs/webui:react"
-    webui: "ndslabs/webui:react-dev"
+    webui: "ndslabs/webui:react"
     apiserver: "ndslabs/apiserver:python"
+
+    # uncomment this to use the dev image (also enable config.frontend.live_reload)
+    webui: "ndslabs/webui:react-dev"
   initContainers:
     - name: wait-for-keycloak
       image: ghcr.io/groundnuty/k8s-wait-for:v1.6
