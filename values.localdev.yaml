@@ -1,0 +1,34 @@
+
+# Expose mongodb on port 30017 for local development (insecure!)
+mongodb:
+  service:
+    nodePorts:
+      mongodb: 30017
+
+
+controller:
+  # Enable DEBUG mode for Python API (auto-restart when source updates)
+  extraEnv:
+    apiserver:
+    - name: DEBUG
+      value: "true"
+
+  # Create volumes from the source code on the host machine
+  extraVolumes:
+    - name: webuisrc
+      hostPath:
+        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/webui/build   # for local development
+    - name: apisrc
+      hostPath:
+        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/apiserver
+
+  # Mount the source code into webui and apiserver containers
+  extraVolumeMounts:
+    webui:
+    - mountPath: /usr/share/nginx/html/          # for local development
+      name: webuisrc
+    apiserver:
+    - mountPath: /app/
+      name: apisrc
+
+

@@ -8,7 +8,7 @@ include .env
 export
 
 # Set this to empty to disable creating keycloak-realm ConfigMap
-#REALM_IMPORT=realm_import
+#REALM_IMPORT=
 
 define HELP_BODY
         Workbench Helm chart deployment helper Makefile
@@ -114,8 +114,9 @@ dep: check_helm
 	helm dep up
 
 install: check_helm $(REALM_IMPORT)
-	if [ ! -d "charts/" ]; then make dep; fi 
-	helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH)
+	if [ ! -d "charts/" ]; then make dep; fi
+	if [ "$(REALM_IMPORT)" == "" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH); fi
+	if [ "$(REALM_IMPORT)" != "" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.realmimport.yaml; fi
 
 uninstall: check_helm 
 	helm uninstall --wait -n $(NAMESPACE) $(NAME)

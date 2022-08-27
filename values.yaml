@@ -11,9 +11,6 @@ controller:
   images:
     webui: "ndslabs/webui:react"
     apiserver: "ndslabs/apiserver:python"
-
-    # uncomment this to use the dev image (also enable config.frontend.live_reload)
-    webui: "ndslabs/webui:react-dev"
   initContainers:
     - name: wait-for-keycloak
       image: ghcr.io/groundnuty/k8s-wait-for:v1.6
@@ -22,34 +19,20 @@ controller:
         - "pod"
         - "-lapp.kubernetes.io/component=keycloak"
 
-  extraEnv:
-    webui: []
-    apiserver:
-    - name: DEBUG
-      value: "true"
+  # Note: labels are immutable - changing labels will require you to uninstall and then reinstall the chart
+  extraLabels: {}
 
+  extraVolumes: []
 
   extraVolumeMounts:
-    webui:
-#    - mountPath: /usr/share/nginx/html/          # for staging
-    - mountPath: /app/                            # for live_reload
-      name: webuisrc
-    apiserver:
-    - mountPath: /app/
-      name: apisrc
+    webui: []
+    apiserver: []
 
-  extraVolumes:
-    - name: webuisrc
-      hostPath:
-        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/webui/         # for live_reload
-#        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/webui/build   # for staging
-    - name: apisrc
-      hostPath:
-        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/apiserver
+  extraEnv:
+    webui: []
+    apiserver: []
 
-  extraLabels:
-    manager: workbench
-  strategy_type: "Recreate"  # default: RollingUpdate
+  strategy_type: "RollingUpdate"  # default: RollingUpdate
 
   # Set DNS aliases within this container
   hostAliases: []
@@ -83,7 +66,7 @@ ingress:
 
 config:
   frontend:
-    live_reload: "true"
+    live_reload: "false"
     support_email: ""
     analytics_tracking_id: ""
     signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
@@ -245,7 +228,7 @@ keycloak:
 
 oauth2-proxy:
   enabled: true
-  # Need to define a custom role to wait-for-keycloak
+  # Need to define a custom role and binding to wait-for-keycloak
   extraDeploy:
     - apiVersion: rbac.authorization.k8s.io/v1
       kind: Role
@@ -317,12 +300,6 @@ mongodb:
     replicaSetKey: changeme
     rootUser: workbench
     rootPassword: workbench
-  service:
-    type: NodePort
-    nodePorts:
-      mongodb: 30017
-    
-  
 
   # TODO: Test AWS + GKE PVs
   persistent:
