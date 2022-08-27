@@ -46,6 +46,7 @@ These options affect the Deployment resource created by this chart.
 | `controller.images.webui` | string | Image to use for `webui` container | `ndslabs/webui:react` |
 | `controller.images.apiserver` | string | Image to use for `apiserver` container | `ndslabs/webui:react` |
 | `controller.initContainers` | array[map] | Specify `initContainers` for main application | `[]` |
+| `controller.extraLabels` | map | Extra labels to apply to the controller/service | `{}` |
 | `controller.extraEnv.webui` | array[map] | Additional `env` to set for `webui` container | `[]` |
 | `controller.extraEnv.apiserver` | array[map] | Additional `env` variables to set for `apiserver` container | `[]` |
 | `controller.extraVolumeMounts.webui` | array[map] | Additional `volumeMounts` to set for `webui` container | `[]` |
@@ -68,20 +69,23 @@ These options affect the internals of Workbench and the customization of the Web
 
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
-| `config.frontend.signin_url` | string | URL to route frontend requests to "Log In"  | `https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F` |
+| `config.frontend.live_reload` | bool | If true, change to use dev image ports (instead of port 80) when running dev image | `false` |
+| `config.frontend.signin_url` | string | URL to route frontend requests to "Log In"  | `https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps` |
+| `config.frontend.signout_url` | string | URL to route frontend requests to "Log Out"  | `https://kubernetes.docker.internal/oauth2/sign_out?rd=https%3A%2F%2Fkubernetes.docker.internal%2F` |
+| `config.frontend.domain` | string | Domain name (used by backend for self-reference) | `https://kubernetes.docker.internal` |
 | `config.frontend.customization.product_name` | string | Human-friendly name to use for this product in the navbar | `Workbench` |
 | `config.frontend.customization.landing_html` | string | HTML string to use as the splash text on the Landing Page | existing HTML |
 | `config.frontend.customization.favicon_path` | string | Image to use as the favicon | `/favicon.svg` |
 | `config.frontend.customization.brand_logo_path` | string | Image to use as the brand log (top-left of navbar) | `/favicon.svg` |
 | `config.frontend.customization.learn_more_url` | string | (currently unused) URL to use for the "Learn More" button on the Landing Page | `http://www.nationaldataservice.org/platform/workbench.html` |
 | `config.frontend.customization.help_links` | array | List of links to use in the navbar "Help" section | existing URLs |
+| `config.backend.oauth.userinfoUrl` | string | URL | `https://kubernetes.docker.internal/oauth2/userinfo` |
 | `config.backend.mongo.uri` | string | URI pointing at running MongoDB instance | `mongodb://workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs` |
 | `config.backend.mongo.db` | string | Database name to use in MongoDB | `ndslabs` |
 | `config.backend.mongo.keycloak.hostname` | string | URI pointing at running Keycloak instance | `https://kubernetes.docker.internal/auth` |
 | `config.backend.keycloak.realmName` | string | Realm name to use in Keycloak | `workbench-dev` |
 | `config.backend.keycloak.clientId` | string | OIDC ClientID to use for Keycloak auth | `workbench-local` |
 | `config.backend.keycloak.clientSecret` | string | OIDC ClientSecret to use for Keycloak auth | `""` |
-| `config.backend.domain` | string | Domain name (used by backend for self-reference) | `kubernetes.docker.internal` |
 | `config.backend.insecure_ssl_verify` | string | If `false`, skip checking insecure/invalid TLS certificates | `true` |
 | `config.backend.storage.home.storage_class` | string | StorageClass to use for user Home volumes | `nfs` |
 | `config.backend.storage.home.claim_suffix` | string | Suffix to append to names of user Home volumes | `-home` |
@@ -107,6 +111,7 @@ These options are currently present, but may not yet be used.
 
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
+| `config.backend.domain` | string | Domain name (used by backend for self-reference) | `kubernetes.docker.internal` |
 | `config.backend.timeout` | int | (currently unused) startup timeout for UserApps | `30` |
 | `config.backend.inactivity_timeout` | int | (currently unused) Shut down inactive services after this many minutes | `480` |
 | `config.backend.specs.repo` | string | (currently unused) Git repo from which to pull application specs | `https://github.com/nds-org/ndslabs-specs.git` |
