@@ -4,20 +4,31 @@ metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    component: {{ .Release.Name }}
-{{- with .Values.controller.labels }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: {{ .Release.Name }}
+    app.kubernetes.io/component: {{ .Release.Name }}
+{{- with .Values.controller.serviceLabels }}
 {{ toYaml . | indent 4 }}
 {{- end }}
 spec:
   selector:
-    component: {{ .Release.Name }}
-{{- with .Values.controller.labels }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: {{ .Release.Name }}
+    app.kubernetes.io/component: {{ .Release.Name }}
+{{- with .Values.controller.extraLabels }}
 {{ toYaml . | indent 4 }}
 {{- end }}
   ports:
+{{- if .Values.config.frontend.live_reload }}
+    - port: 80
+      targetPort: 3000
+      name: webui
+      protocol: TCP
+{{- else }}
     - port: 80
       name: webui
       protocol: TCP
+{{- end }}
     - port: 5000
       name: api
       protocol: TCP

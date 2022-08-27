@@ -4,8 +4,11 @@ metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    component: {{ .Release.Name }}
-{{- with .Values.controller.labels }}
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: {{ .Release.Name }}
+    app.kubernetes.io/component: {{ .Release.Name }}
+{{- with .Values.controller.extraLabels }}
 {{ toYaml . | indent 4 }}
 {{- end }}
 spec:
@@ -14,15 +17,21 @@ spec:
     type: {{ .Values.controller.strategy_type | default "RollingUpdate" }}
   selector:
     matchLabels:
-      component: {{ .Release.Name }}
-{{- with .Values.controller.labels }}
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ .Release.Name }}
+      app.kubernetes.io/component: {{ .Release.Name }}
+{{- with .Values.controller.extraLabels }}
 {{ toYaml . | indent 6 }}
 {{- end }}
   template:
     metadata:
       labels:
-        component: {{ .Release.Name }}
-{{- with .Values.controller.labels }}
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/name: {{ .Release.Name }}
+        app.kubernetes.io/component: {{ .Release.Name }}
+{{- with .Values.controller.extraLabels }}
 {{ toYaml . | indent 8 }}
 {{- end }}
       annotations:
@@ -72,14 +81,21 @@ spec:
 {{ toYaml . | indent 10 }}
 {{- end }}
         ports:
+{{- if .Values.config.frontend.live_reload }}
+        - containerPort: 3000
+          name: webui
+{{- else }}
         - containerPort: 80
           name: webui
+{{- end }}
         volumeMounts:
+{{- with .Values.controller.extraVolumeMounts.webui }}
+{{ toYaml . | indent 8 }}
+{{- end }}
+{{- if not .Values.config.frontend.live_reload }}
         - name: frontend-config
           mountPath: /usr/share/nginx/html/frontend.json
           subPath: frontend.json
-{{- with .Values.controller.extraVolumeMounts.webui }}
-{{ toYaml . | indent 8 }}
 {{- end }}
         resources:
 {{- with .Values.resources.webui }}
@@ -90,15 +106,15 @@ spec:
         image: {{ required "Must specify an image for controller.images.apiserver" .Values.controller.images.apiserver }}
         imagePullPolicy: Always
         volumeMounts:
+{{- with .Values.controller.extraVolumeMounts.apiserver }}
+{{ toYaml . | indent 8 }}
+{{- end }}
         - name: frontend-config
           mountPath: /app/env/frontend.json
           subPath: frontend.json
         - name: backend-config
           mountPath: /app/env/backend.json
           subPath: backend.json
-{{- with .Values.controller.extraVolumeMounts.apiserver }}
-{{ toYaml . | indent 8 }}
-{{- end }}
         env:
           - name: CONFIG_HASH
             valueFrom:

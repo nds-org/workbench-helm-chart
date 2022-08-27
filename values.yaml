@@ -9,7 +9,8 @@ extraDeploy: []
 controller:
   kind: Deployment   # default: Deployment
   images:
-    webui: "ndslabs/webui:react"
+    #webui: "ndslabs/webui:react"
+    webui: "ndslabs/webui:react-dev"
     apiserver: "ndslabs/apiserver:python"
   initContainers:
     - name: wait-for-keycloak
@@ -28,7 +29,8 @@ controller:
 
   extraVolumeMounts:
     webui:
-    - mountPath: /usr/share/nginx/html/
+#    - mountPath: /usr/share/nginx/html/          # for staging
+    - mountPath: /app/                            # for live_reload
       name: webuisrc
     apiserver:
     - mountPath: /app/
@@ -37,20 +39,18 @@ controller:
   extraVolumes:
     - name: webuisrc
       hostPath:
-        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/webui/build
+        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/webui/         # for live_reload
+#        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/webui/build   # for staging
     - name: apisrc
       hostPath:
         path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/apiserver
 
-  #labels:
-  #  manager: workbench
-  #strategy_type: "Recreate"  # default: RollingUpdate
+  extraLabels:
+    manager: workbench
+  strategy_type: "Recreate"  # default: RollingUpdate
 
-  # Uncomment to set DNS aliases within this container
-  #hostAliases:
-  #- ip: "10.105.112.195"
-  #  hostnames:
-  #  - "keycloak.local.ndslabs.org"
+  # Set DNS aliases within this container
+  hostAliases: []
 
 ingress:
   class: "nginx"
@@ -71,8 +71,8 @@ ingress:
       ingress.kubernetes.io/ssl-redirect: "true"
       ingress.kubernetes.io/force-ssl-redirect: "true"
       #nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
-      #nginx.ingress.kubernetes.io/auth-signin: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
-      #nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email"
+      #nginx.ingress.kubernetes.io/auth-signin: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
+      #nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-name"
   # TODO: currently unused 
   userapps:
 
@@ -81,9 +81,11 @@ ingress:
 
 config:
   frontend:
+    live_reload: "true"
     support_email: ""
     analytics_tracking_id: ""
-    signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
+    signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
+    signout_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
     customization:
       product_name: "Workbench"
       landing_html: "<span style='font-size:20pt;'><p>Labs Workbench is an environment where developers can prototype tools and capabilities</p><p>that help build out the NDS framework and services. In particular, it is a place that can</p><p>host the development activities of <a style='text-decoration:none;' href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects</a></p></span>"
@@ -108,9 +110,13 @@ config:
           url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy"
   
   backend:
+    oauth:
+      userinfoUrl: https://kubernetes.docker.internal/oauth2/userinfo
+
     # Point at internal mongodb
     mongo:
-      uri: "mongodb://workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs"
+      uri: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
+      db: ndslabs
 
     # Point at internal Keycloak instance + imported realm
     keycloak:
@@ -131,7 +137,7 @@ config:
           kubernetes.io/ingress.class: "nginx"
           ingress.kubernetes.io/ssl-redirect: "true"
           ingress.kubernetes.io/force-ssl-redirect: "true"
-          nginx.ingress.kubernetes.io/signin-url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
+          nginx.ingress.kubernetes.io/signin-url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
           nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
           nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
   
@@ -270,18 +276,19 @@ oauth2-proxy:
         - "-lapp.kubernetes.io/component=keycloak"
   extraArgs:
     # Keycloak OIDC config:
-    - --provider=keycloak-oidc
+    - --provider=keycloak-oidc  # "oidc" works as well, but this gives us roles too
     - --provider-display-name=Workbench Login
     - --redirect-url=https://kubernetes.docker.internal/oauth2/callback
     - --oidc-issuer-url=https://kubernetes.docker.internal/auth/realms/workbench-dev
     - --client-id=workbench-local
 
     # Authorization config:
-    #- --email-domain=*
-    #- --whitelist-domain=*
-    #- --cookie-domain=.ndslabs.org
-    #- --scope=email profile
-    #- --allowed-group=/workbench
+    #- --email-domain=illinois.edu
+    - --whitelist-domain=.docker.internal     # needed to use the "rd" query string parameter
+    - --cookie-domain=.docker.internal        # forward your cookie automatically to subdomains
+    #- --cookie-samesite=lax
+    - --scope=email profile openid
+    - --allowed-role=workbench-user
 
     # Local Development Only:
     - --insecure-oidc-skip-issuer-verification=true
@@ -308,6 +315,12 @@ mongodb:
     replicaSetKey: changeme
     rootUser: workbench
     rootPassword: workbench
+  service:
+    type: NodePort
+    nodePorts:
+      mongodb: 30017
+    
+  
 
   # TODO: Test AWS + GKE PVs
   persistent:
@@ -317,6 +330,9 @@ mongodb:
     # If using awsElasticBlockStore enter the EBS volume id, if using gcePersistentDisk
     # enter the persistent disk name
     volume_id:
+
+  persistence:
+    resourcePolicy: keep
   storage_class: "hostpath"
   access_mode: "ReadWriteOnce"   # default: ReadWriteOnce
   size: "1Gi"

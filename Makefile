@@ -143,10 +143,12 @@ compile: check_yarn
 	(cd src/webui/ && yarn install && yarn build)
 
 build: check_docker clone
-	docker build -t $(WEBUI_IMAGE) src/webui/
+	docker build -t $(WEBUI_IMAGE)-dev -f src/webui/Dockerfile.dev src/webui/
 	docker build -t $(APISERVER_IMAGE) src/apiserver/
+	docker build -t $(WEBUI_IMAGE) src/webui/
 
 push: build
+	docker push $(WEBUI_IMAGE)-dev
 	docker push $(APISERVER_IMAGE)
 	docker push $(WEBUI_IMAGE)
 
@@ -156,11 +158,11 @@ push: build
 ##############################
 realm_import: check_kubectl
 	kubectl create namespace $(NAMESPACE) >/dev/null 2>&1; \
-	kubectl get configmaps keycloak-realm -n $(NAMESPACE) || kubectl create configmap keycloak-realm -n workbench --from-file=realm.json
+	kubectl get configmaps keycloak-realm -n $(NAMESPACE) || kubectl create configmap keycloak-realm -n $(NAMESPACE) --from-file=realm.json
 
 acmedns_secret: check_kubectl
 	kubectl create namespace $(NAMESPACE) >/dev/null 2>&1; \
-	kubectl create secret generic acme-dns -n workbench --from-file=acmedns.json
+	kubectl create secret generic acme-dns -n $(NAMESPACE) --from-file=acmedns.json
 
 status: check_kubectl
 	kubectl get pods,pvc -n $(NAMESPACE)
@@ -175,13 +177,12 @@ logs: check_kubectl
 	# params: target = proxy,ingress,mongo,apiserver,webui
 	# syntax: $(target)
 	if [ "$(target)" == "" ]; then echo 'Please specify a target: api (apiserver), ui (webui), proxy (oauth2-proxy), db (mongo, mongodb), kc (keycloak), nginx (ingress)'; echo 'Example usage: "make target=apiserver logs"'; fi
-	if [ "$(target)" == "api" -o "$(target)" == "apiserver" ]; then kubectl logs -f deploy/$(NAME) -n $(NAMESPACE) -c apiserver; fi
-	if [ "$(target)" == "ui" -o "$(target)" == "webui" ]; then kubectl logs -f deploy/$(NAME) -n $(NAMESPACE) -c webui; fi
-	if [ "$(target)" == "proxy" -o "$(target)" == "oauth2-proxy" ]; then kubectl logs -f deploy/$(NAME)-oauth2-proxy -n $(NAMESPACE); fi
-	if [ "$(target)" == "db" -o "$(target)" == "mongo" -o "$(target)" == "mongodb" ]; then kubectl logs -f deploy/$(NAME)-mongodb -n $(NAMESPACE); fi
-	if [ "$(target)" == "kc" -o "$(target)" == "keycloak" ]; then kubectl logs -f $(NAME)-keycloak-0 -n $(NAMESPACE); fi
-	if [ "$(target)" == "nginx" -o "$(target)" == "ingress" ]; then kubectl logs -f deploy/$(NAME)-ingress-nginx-controller -n $(NAMESPACE); fi
-	#if [ "$(target)" == "proxy" -o "$(target)" == "oauth2-proxy" ]; then ; fi
+	if [ "$(target)" == "api" -o "$(target)" == "apiserver" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=$(NAME) -n $(NAMESPACE) -c apiserver; fi
+	if [ "$(target)" == "ui" -o "$(target)" == "webui" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=$(NAME) -n $(NAMESPACE) -c webui; fi
+	if [ "$(target)" == "db" -o "$(target)" == "mongo" -o "$(target)" == "mongodb" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=mongodb; fi
+	if [ "$(target)" == "kc" -o "$(target)" == "keycloak" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=keycloak -n $(NAMESPACE); fi
+	if [ "$(target)" == "nginx" -o "$(target)" == "ingress" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=ingress-nginx -n $(NAMESPACE); fi
+	if [ "$(target)" == "proxy" -o "$(target)" == "oauth2-proxy" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=oauth2-proxy -n $(NAMESPACE); fi
 
 restart: check_kubectl
 	kubectl delete pod -n $(NAMESPACE) -lcomponent=$(NAME)
@@ -192,5 +193,5 @@ clean: check_kubectl
 clean_all: check_helm check_kubectl
 	make uninstall 2>&1; \
 	kubectl delete namespace $(NAMESPACE) --wait --ignore-not-found; \
-	kubectl delete validatingwebhookconfigurations workbench-ingress-nginx-admission --ignore-not-found
+	kubectl delete validatingwebhookconfigurations $(NAME)-ingress-nginx-admission --ignore-not-found
 
