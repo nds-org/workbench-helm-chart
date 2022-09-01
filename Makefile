@@ -124,7 +124,7 @@ uninstall: check_helm
 template: check_helm
 	helm template --debug --dry-run $(NAME) -n $(NAMESPACE) $(CHART_PATH)
 
-dev: check_helm
+dev: check_helm clone
 	helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) -f values.localdev.yaml -f values.localdev.livereload.yaml
 	make compile
 
