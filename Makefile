@@ -124,6 +124,10 @@ uninstall: check_helm
 template: check_helm
 	helm template --debug --dry-run $(NAME) -n $(NAMESPACE) $(CHART_PATH)
 
+dev: check_helm
+	helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) -f values.localdev.yaml -f values.localdev.livereload.yaml
+	make compile
+
 
 ##########################################################
 # Local Dev commands: clone, pull, compile, build, push  #
@@ -186,7 +190,7 @@ logs: check_kubectl
 	if [ "$(target)" == "proxy" -o "$(target)" == "oauth2-proxy" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=oauth2-proxy -n $(NAMESPACE); fi
 
 restart: check_kubectl
-	kubectl delete pod -n $(NAMESPACE) -lcomponent=$(NAME)
+	kubectl delete pod -n $(NAMESPACE) -lapp.kubernetes.io/name=$(NAME)
      
 clean: check_kubectl
 	kubectl delete pvc -n $(NAMESPACE) --all

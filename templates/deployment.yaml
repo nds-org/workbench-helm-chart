@@ -120,18 +120,6 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.annotations['configHash']
-          - name: KEYCLOAK_HOST
-            value: "{{ .Values.config.backend.keycloak.hostname }}"
-          - name: MONGO_URI
-            value: "{{ required "You must specify a mongo hostname" .Values.config.backend.mongo.uri }}"
-          - name: KEYCLOAK_REALM
-            value: "{{ .Values.config.backend.keycloak.realmName | default "workbench-dev" }}"
-          - name: KEYCLOAK_CLIENT_ID
-            value: "{{ .Values.config.backend.keycloak.clientId | default "workbench-local" }}"
-          - name: KEYCLOAK_CLIENT_SECRET
-            value: "{{ .Values.config.backend.keycloak.clientSecret | default "" }}"
-          - name: INSECURE_SSL_VERIFY
-            value: "{{ .Values.config.backend.insecure_ssl_verify | default true }}"
 {{- with .Values.controller.extraEnv.apiserver }}
 {{ toYaml . | indent 10 }}
 {{- end }}

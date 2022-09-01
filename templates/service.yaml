@@ -19,16 +19,11 @@ spec:
 {{ toYaml . | indent 4 }}
 {{- end }}
   ports:
-{{- if .Values.config.frontend.live_reload }}
     - port: 80
-      targetPort: 3000
+      targetPort: webui
       name: webui
       protocol: TCP
-{{- else }}
-    - port: 80
-      name: webui
-      protocol: TCP
-{{- end }}
     - port: 5000
+      targetPort: api
       name: api
       protocol: TCP
