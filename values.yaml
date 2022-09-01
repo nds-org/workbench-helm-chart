@@ -123,6 +123,11 @@ config:
     # Define our own domain and config params
     domain: "kubernetes.docker.internal"
     insecure_ssl_verify: "false"   # default: true
+    swagger_url: openapi/swagger-v1.yml
+    namespace: "workbench"
+    singlepod: false
+    storage_class: null 
+
 
     # Define parameters about the created userapp
     userapps:
