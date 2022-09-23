@@ -4,6 +4,8 @@
 
 ### Kubernetes deployment options
 
+
+
 extraDeploy: []
 
 controller:
@@ -68,8 +70,7 @@ ingress:
       #nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
       #nginx.ingress.kubernetes.io/auth-signin: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
       #nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-name"
-  # TODO: currently unused 
-  userapps:
+
 
 
 ### Workbench config and cutomization
@@ -309,6 +310,14 @@ oauth2-proxy:
 
 mongodb:
   enabled: true
+  autoimport:
+    enabled: true
+    annotations:
+      "helm.sh/hook": post-upgrade
+      "helm.sh/hook-delete-policy": before-hook-creation
+    env:
+      - name: GIT_REPO
+        value: "https://github.com/cheese-hub/catalog"
   architecture: standalone   # WARNING: experimental
   #replicaCount: 3
   auth:
