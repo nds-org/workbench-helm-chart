@@ -124,8 +124,8 @@ uninstall: check_helm
 template: check_helm
 	helm template --debug --dry-run $(NAME) -n $(NAMESPACE) $(CHART_PATH)
 
-dev: check_helm clone
-	helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) -f values.localdev.yaml -f values.localdev.livereload.yaml
+dev: check_helm clone $(REALM_IMPORT)
+	helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml -f values.realmimport.yaml; \
 	make compile
 
 
@@ -176,7 +176,7 @@ watch: check_kubectl
 	kubectl get pods -n $(NAMESPACE) -w
 
 describe: check_kubectl
-	kubectl describe pods -n $(NAMESPACE) -lcomponent=$(NAME) $(target)
+	kubectl describe pods -n $(NAMESPACE) -lapp.kubernetes.io/name=$(NAME) $(target)
 
 logs: check_kubectl
 	# params: target = proxy,ingress,mongo,apiserver,webui
