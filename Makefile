@@ -125,6 +125,7 @@ template: check_helm
 	helm template --debug --dry-run $(NAME) -n $(NAMESPACE) $(CHART_PATH)
 
 dev: check_helm clone $(REALM_IMPORT)
+	helm dep up
 	helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml -f values.realmimport.yaml; \
 	make compile
 
