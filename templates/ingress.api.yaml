@@ -6,6 +6,9 @@ metadata:
   annotations:
 {{ toYaml .Values.ingress.api.annotations | indent 4 }}
 spec:
+{{ if .Values.ingress.class | default false }}
+  ingressClassName: {{ .Values.ingress.class }}
+{{ end }}
 {{ if .Values.ingress.tls | default false }}
   tls:
 {{ toYaml .Values.ingress.tls | indent 4 }}
