@@ -4,14 +4,17 @@ metadata:
   name: {{ .Release.Name }}-webui
   namespace: {{ .Release.Namespace }}
   annotations:
-{{ toYaml .Values.ingress.webui.annotations | indent 4 }}
+    ingress.kubernetes.io/app-root: "/"
+    ingress.kubernetes.io/ssl-redirect: "true"
+    ingress.kubernetes.io/force-ssl-redirect: "true"
+    {{ toYaml .Values.ingress.webui.annotations | nindent 4 }}
 spec:
 {{ if .Values.ingress.class | default false }}
   ingressClassName: {{ .Values.ingress.class }}
 {{ end }}
 {{ if .Values.ingress.tls | default false }}
   tls:
-{{ toYaml .Values.ingress.tls | indent 4  }}
+    {{ toYaml .Values.ingress.tls | nindent 4  }}
 {{ end }}
   rules:
   - host: {{ .Values.config.backend.domain }}

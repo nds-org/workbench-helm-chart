@@ -21,16 +21,6 @@ controller:
         - "pod"
         - "-lapp.kubernetes.io/component=keycloak"
 
-# Import specs as an initContainer
-#    - name: import-specs
-#      image: ndslabs/specloader
-#      imagePullPolicy: Always
-#      env:
-#       - name: MONGO_URI
-#         value: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
-#       - name: MONGO_DB
-#         value: "ndslabs"
-
   # Note: labels are immutable - changing labels will require you to uninstall and then reinstall the chart
   extraLabels: {}
 
@@ -51,6 +41,7 @@ controller:
 
 ingress:
   class: "nginx"
+  host: "kubernetes.docker.internal"
   tls:
     - hosts:
       - "kubernetes.docker.internal"
@@ -65,9 +56,6 @@ ingress:
       ingress.kubernetes.io/app-root: "/"
       ingress.kubernetes.io/ssl-redirect: "true"
       ingress.kubernetes.io/force-ssl-redirect: "true"
-      #nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
-      #nginx.ingress.kubernetes.io/auth-signin: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
-      #nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-name"
 
 
 
