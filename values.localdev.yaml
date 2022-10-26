@@ -1,35 +1,339 @@
+# Default values for workbench.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-# Expose mongodb on port 30017 for local development (insecure!)
-mongodb:
-  service:
-    type: NodePort
-    nodePorts:
-      mongodb: 30017
+### Kubernetes deployment options
 
+
+
+extraDeploy: []
 
 controller:
-  # Enable DEBUG mode for Python API (auto-restart when source updates)
-  extraEnv:
-    apiserver:
-    - name: DEBUG
-      value: "true"
+  kind: Deployment   # default: Deployment
+  images:
+    webui: "ndslabs/webui:react"
+    apiserver: "ndslabs/apiserver:python"
+  initContainers:
+    - name: wait-for-keycloak
+      image: ghcr.io/groundnuty/k8s-wait-for:v1.6
+      imagePullPolicy: Always
+      args:
+        - "pod"
+        - "-lapp.kubernetes.io/component=keycloak"
 
-  # Create volumes from the source code on the host machine
-  extraVolumes:
-    - name: webuisrc
-      hostPath:
-        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/webui/build   # for local development
-    - name: apisrc
-      hostPath:
-        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/apiserver
+  # Note: labels are immutable - changing labels will require you to uninstall and then reinstall the chart
+  extraLabels: {}
 
-  # Mount the source code into webui and apiserver containers
+  extraVolumes: []
+
   extraVolumeMounts:
-    webui:
-    - mountPath: /usr/share/nginx/html/          # for local development
-      name: webuisrc
-    apiserver:
-    - mountPath: /app/
-      name: apisrc
+    webui: []
+    apiserver: []
+
+  extraEnv:
+    webui: []
+    apiserver: []
+
+  strategy_type: "RollingUpdate"  # default: RollingUpdate
+
+  # Set DNS aliases within this container
+  hostAliases: []
+
+ingress:
+  class: "nginx"
+  host: "kubernetes.docker.internal"
+  tls:
+    - hosts:
+      - "kubernetes.docker.internal"
+  api:
+    annotations:
+      #cert-manager.io/issuer: "acmedns-staging"
+      ingress.kubernetes.io/app-root: "/"
+      ingress.kubernetes.io/ssl-redirect: "true"
+      ingress.kubernetes.io/force-ssl-redirect: "true"
+  webui:
+    annotations:
+      ingress.kubernetes.io/app-root: "/"
+      ingress.kubernetes.io/ssl-redirect: "true"
+      ingress.kubernetes.io/force-ssl-redirect: "true"
+
+
+
+### Workbench config and cutomization
+
+config:
+  frontend:
+    live_reload: false
+    support_email: ""
+    analytics_tracking_id: ""
+    signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
+    signout_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
+    customization:
+      product_name: "Workbench"
+      landing_html: "<span style='font-size:20pt;'><p>Labs Workbench is an environment where developers can prototype tools and capabilities</p><p>that help build out the NDS framework and services. In particular, it is a place that can</p><p>host the development activities of <a style='text-decoration:none;' href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects</a></p></span>"
+      favicon_path: "/favicon.svg"
+      brand_logo_path: "/favicon.svg"
+      learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
+      help_links:
+        - icon: "fa-info-circle"
+          name: "Feature Overview"
+          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview"
+        - icon: "fa-question-circle"
+          name: "FAQ"
+          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions"
+        - icon: "fa-book"
+          name: "User's Guide"
+          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide"
+        - icon: "fa-code-fork"
+          name: "Developer's Guide"
+          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide"
+        - icon: "fa-gavel"
+          name: "Acceptable Use Policy"
+          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy"
+  
+  backend:
+    oauth:
+      userinfoUrl: https://kubernetes.docker.internal/oauth2/userinfo
+
+    # Point at internal mongodb
+    mongo:
+      uri: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
+      db: ndslabs
+
+    # Point at internal Keycloak instance + imported realm
+    keycloak:
+      hostname: "https://kubernetes.docker.internal/auth"
+      realmName: "workbench-dev"
+      clientId: "workbench-local"
+      clientSecret: ""
+
+    # Define our own domain and config params
+    domain: "kubernetes.docker.internal"
+    insecure_ssl_verify: "false"   # default: true
+    swagger_url: openapi/swagger-v1.yml
+    namespace: "workbench"
+    singlepod: false
+    storage_class: null 
+
+
+    # Define parameters about the created userapp
+    userapps:
+      ingress:
+        enabled: true   # TODO: currently ignored
+        class: nginx
+        tls:
+          hosts:
+           - kubernetes.docker.internal
+           - '*.kubernetes.docker.internal'
+        annotations:
+          ingress.kubernetes.io/ssl-redirect: "true"
+          ingress.kubernetes.io/force-ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/signin-url: "https://$host/oauth2/start?rd=https%3A%2F%2F$host%2Fmy-apps"
+          nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+          nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
+  
+    # TODO: Legacy config options (currently ignored)
+    timeout: 30
+    inactivity_timeout: 480
+    specs:
+      repo: "https://github.com/nds-org/ndslabs-specs.git"
+      branch: master
+    storage:
+      home:
+        storage_class: "nfs"
+        claim_suffix: "-home"
+      shared:
+        enabled: false
+        volume_path: "/tmp/shared"
+        storage_class: "nfs"
+        read_only: true
+
+### Optional dependency subcharts
+
+# Enable this to run an NGINX ingress controller (if you aren't running another ingress controller)
+ingress-nginx:
+  enabled: true
+  controller:
+    # If you have an existing TLS secret, you can uncomment this to specify it here
+    # Otherwise NGINX will generate a self-signed and use that instead
+    #extraArgs:
+    #  default-ssl-certificate: workbench/ndslabs-tls
+    hostPort:
+      enabled: true
+    kind: Deployment
+
+
+# Enable this to use an external NFS server to provision user volumes (e.g. nfs-condo)
+nfs-client-provisioner:
+  enabled: false   # WARNING: experimental
+  nfs:
+    server: "workbench-nfs-server-provisioner.workbench.svc.cluster.local"
+    path: "/export"
+    mountOptions:
+    - tcp
+    - nfsvers=3
+
+    
+# Enable this to run a local NFS server (development only)      
+nfs-server-provisioner:
+  enabled: true
+  persistence:
+    enabled: true
+    storageClass: "hostpath"
+
+
+# Enable this to run a local Keycloak instance (development only)
+keycloak:
+  enabled: true
+  httpRelativePath: "/auth/"
+  auth:
+    adminUser: "admin"
+    adminPassword: "workbench"
+  proxyAddressForwarding: true
+  # To automatically import a Keycloak realm for development, uncomment this and create a new configmap:
+  #   kubectl create configmap keycloak-realm -n workbench --from-file=realm.json
+  extraEnvVars:
+    - name: KEYCLOAK_EXTRA_ARGS
+      value: "-Dkeycloak.import=/config/realm.json"
+  extraVolumeMounts:
+    - name: config
+      mountPath: "/config"
+      readOnly: true
+  extraVolumes:
+    - name: config
+      configMap:
+        name: keycloak-realm
+        items:
+        - key: "realm.json"
+          path: "realm.json"
+  global:
+    storageClass: "hostpath"
+    postgresql:
+      auth:
+        postgresPassword: workbench
+        password: workbench
+  postgresql:
+    enabled: true
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: true
+    className: nginx
+    hostname: "kubernetes.docker.internal"
+    tls: true
+    path: /auth/
+    annotations:
+      kubernetes.io/ingress.class: nginx
+
+      # without this, signups (and other large proxy bodies) will fail with a 502
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    extraTls:
+      - hosts:
+        - kubernetes.docker.internal
+
+
+oauth2-proxy:
+  enabled: true
+  # Need to define a custom role and binding to wait-for-keycloak
+  extraDeploy:
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: wait-for-pods
+        namespace: workbench
+      rules:
+      - apiGroups: [""]
+        resources: ["pods"]
+        verbs: ["get", "watch", "list"]
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: oauth2-proxy-wait-for-pods
+        namespace: workbench
+      subjects:
+      - kind: ServiceAccount
+        name: workbench-oauth2-proxy
+        namespace: workbench
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: Role 
+        name: wait-for-pods
+  initContainers:
+    - name: wait-for-keycloak
+      image: ghcr.io/groundnuty/k8s-wait-for:v1.6
+      imagePullPolicy: Always
+      args:
+        - "pod"
+        - "-lapp.kubernetes.io/component=keycloak"
+  extraArgs:
+    # Keycloak OIDC config:
+    - --provider=keycloak-oidc  # "oidc" works as well, but this gives us roles too
+    - --provider-display-name=Workbench Login
+    - --redirect-url=https://kubernetes.docker.internal/oauth2/callback
+    - --oidc-issuer-url=https://kubernetes.docker.internal/auth/realms/workbench-dev
+    - --client-id=workbench-local
+
+    # Authorization config:
+    #- --email-domain=illinois.edu
+    - --whitelist-domain=.docker.internal     # needed to use the "rd" query string parameter
+    - --cookie-domain=.docker.internal        # forward your cookie automatically to subdomains
+    #- --cookie-samesite=lax
+    - --scope=email profile openid
+    - --allowed-role=workbench-user
+
+    # Local Development Only:
+    - --insecure-oidc-skip-issuer-verification=true
+    - --insecure-oidc-allow-unverified-email=true
+    - --ssl-insecure-skip-verify=true
+    - --ssl-upstream-insecure-skip-verify=true
+    - --force-json-errors=true
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    path: /oauth2/
+    pathtype: Prefix
+    hostname: kubernetes.docker.internal
+    tls:
+      - hosts:
+          - kubernetes.docker.internal
+  
+
+mongodb:
+  enabled: true
+  autoimport:
+    enabled: true
+    annotations:
+      "helm.sh/hook": post-upgrade
+      "helm.sh/hook-delete-policy": before-hook-creation
+    env:
+      - name: FORCE
+        value: "true"
+      - name: MONGO_URI
+        value: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
+      - name: GIT_REPO
+        value: "https://github.com/cheese-hub/catalog"
+      - name: GIT_BRANCH
+        value: "update-logo-paths-for-react"
+  architecture: standalone   # WARNING: experimental
+  #replicaCount: 3
+  auth:
+    replicaSetKey: changeme
+    rootUser: workbench
+    rootPassword: workbench
+
+  # TODO: Test AWS + GKE PVs
+  persistent:
+    # Values can be "false" for no persistent storage, "aws" for awsElasticBlockStore,
+    # or "gce" for gcePersistentDisk
+    type: false
+    # If using awsElasticBlockStore enter the EBS volume id, if using gcePersistentDisk
+    # enter the persistent disk name
+    volume_id:
+
+  persistence:
+    resourcePolicy: keep
+  storage_class: "hostpath"
+  access_mode: "ReadWriteOnce"   # default: ReadWriteOnce
+  size: "1Gi"
 
 

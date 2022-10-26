@@ -6,6 +6,7 @@
 
 
 
+# Need to define a custom role and binding to wait-for-keycloak
 extraDeploy: []
 
 controller:
@@ -13,13 +14,7 @@ controller:
   images:
     webui: "ndslabs/webui:react"
     apiserver: "ndslabs/apiserver:python"
-  initContainers:
-    - name: wait-for-keycloak
-      image: ghcr.io/groundnuty/k8s-wait-for:v1.6
-      imagePullPolicy: Always
-      args:
-        - "pod"
-        - "-lapp.kubernetes.io/component=keycloak"
+  initContainers: []
 
   # Note: labels are immutable - changing labels will require you to uninstall and then reinstall the chart
   extraLabels: {}
@@ -40,7 +35,6 @@ controller:
   hostAliases: []
 
 ingress:
-  class: "nginx"
   host: "kubernetes.docker.internal"
   tls:
     - hosts:
@@ -67,10 +61,10 @@ config:
     support_email: ""
     analytics_tracking_id: ""
     signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
-    signout_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
+    signout_url: "https://kubernetes.docker.internal/oauth2/sign_out?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
     customization:
       product_name: "Workbench"
-      landing_html: "<span style='font-size:20pt;'><p>Labs Workbench is an environment where developers can prototype tools and capabilities</p><p>that help build out the NDS framework and services. In particular, it is a place that can</p><p>host the development activities of <a style='text-decoration:none;' href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects</a></p></span>"
+      landing_html: "<p>Labs Workbench is an environment where developers can prototype tools and capabilities</p><p>that help build out the NDS framework and services. In particular, it is a place that can</p><p>host the development activities of <a style='text-decoration:none;' href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects</a></p>"
       favicon_path: "/favicon.svg"
       brand_logo_path: "/favicon.svg"
       learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
@@ -109,18 +103,24 @@ config:
 
     # Define our own domain and config params
     domain: "kubernetes.docker.internal"
-    insecure_ssl_verify: "false"   # default: true
+    insecure_ssl_verify: "true"   # default: true
     swagger_url: openapi/swagger-v1.yml
     namespace: "workbench"
-    singlepod: false
-    storage_class: null 
 
 
     # Define parameters about the created userapp
     userapps:
+      singlepod: false
+      home_storage:
+        enabled: true
+        claim_suffix: "home-data"
+      shared_storage:
+        enabled: false
+        read_only: false
+        mount_path: "/shared"
+        claim_name: "workbench-shared-storage"
       ingress:
         enabled: true   # TODO: currently ignored
-        class: nginx
         tls:
           hosts:
            - kubernetes.docker.internal
@@ -128,25 +128,13 @@ config:
         annotations:
           ingress.kubernetes.io/ssl-redirect: "true"
           ingress.kubernetes.io/force-ssl-redirect: "true"
-          nginx.ingress.kubernetes.io/signin-url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
-          nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
-          nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
+          ingress.kubernetes.io/signin-url: "https://$host/oauth2/start?rd=https%3A%2F%2F$host%2Fmy-apps"
+          ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+          ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
   
     # TODO: Legacy config options (currently ignored)
     timeout: 30
     inactivity_timeout: 480
-    specs:
-      repo: "https://github.com/nds-org/ndslabs-specs.git"
-      branch: master
-    storage:
-      home:
-        storage_class: "nfs"
-        claim_suffix: "-home"
-      shared:
-        enabled: false
-        volume_path: "/tmp/shared"
-        storage_class: "nfs"
-        read_only: true
 
 ### Optional dependency subcharts
 
@@ -218,15 +206,12 @@ keycloak:
     type: ClusterIP
   ingress:
     enabled: true
-    className: nginx
     hostname: "kubernetes.docker.internal"
     tls: true
     path: /auth/
     annotations:
-      kubernetes.io/ingress.class: nginx
-
       # without this, signups (and other large proxy bodies) will fail with a 502
-      nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+      ingress.kubernetes.io/proxy-buffer-size: "128k"
     extraTls:
       - hosts:
         - kubernetes.docker.internal
@@ -234,37 +219,7 @@ keycloak:
 
 oauth2-proxy:
   enabled: true
-  # Need to define a custom role and binding to wait-for-keycloak
-  extraDeploy:
-    - apiVersion: rbac.authorization.k8s.io/v1
-      kind: Role
-      metadata:
-        name: wait-for-pods
-        namespace: workbench
-      rules:
-      - apiGroups: [""]
-        resources: ["pods"]
-        verbs: ["get", "watch", "list"]
-    - apiVersion: rbac.authorization.k8s.io/v1
-      kind: RoleBinding
-      metadata:
-        name: oauth2-proxy-wait-for-pods
-        namespace: workbench
-      subjects:
-      - kind: ServiceAccount
-        name: workbench-oauth2-proxy
-        namespace: workbench
-      roleRef:
-        apiGroup: rbac.authorization.k8s.io
-        kind: Role 
-        name: wait-for-pods
-  initContainers:
-    - name: wait-for-keycloak
-      image: ghcr.io/groundnuty/k8s-wait-for:v1.6
-      imagePullPolicy: Always
-      args:
-        - "pod"
-        - "-lapp.kubernetes.io/component=keycloak"
+  initContainers: []
   extraArgs:
     # Keycloak OIDC config:
     - --provider=keycloak-oidc  # "oidc" works as well, but this gives us roles too
@@ -289,7 +244,6 @@ oauth2-proxy:
     - --force-json-errors=true
   ingress:
     enabled: true
-    ingressClassName: nginx
     path: /oauth2/
     pathtype: Prefix
     hostname: kubernetes.docker.internal
@@ -307,7 +261,7 @@ mongodb:
       "helm.sh/hook-delete-policy": before-hook-creation
     env:
       - name: GIT_REPO
-        value: "https://github.com/cheese-hub/catalog"
+        value: "https://github.com/nds-org/ndslabs"
   architecture: standalone   # WARNING: experimental
   #replicaCount: 3
   auth:

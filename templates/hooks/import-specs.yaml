@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/name: {{ .Release.Name }}-specloader
     app.kubernetes.io/component: specloader
   annotations:
-{{ toYaml .Values.nodeSelector | indent 4 }}
+{{ toYaml .Values.mongodb.autoimport.annotations | indent 4 }}
 spec:
   template:
     metadata:
@@ -29,12 +29,7 @@ spec:
          image: ndslabs/specloader
          imagePullPolicy: Always
          env:
-          - name: MONGO_URI
-            value: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
-          - name: MONGO_DB
-            value: "ndslabs"
-          - name: GIT_REPO
-            value: "http://github.com/cheese-hub/catalog"
+            {{ toYaml .Values.mongodb.autoimport.env | nindent 12 }}
 
       # TODO: Allow modifying the script by mounting at runtime?
       #  volumeMounts:

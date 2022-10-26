@@ -17,7 +17,7 @@ spec:
     {{ toYaml .Values.ingress.tls | nindent 4  }}
 {{ end }}
   rules:
-  - host: {{ .Values.config.backend.domain }}
+  - host: {{ .Values.ingress.host }}
     http:
       paths:
       - path: /

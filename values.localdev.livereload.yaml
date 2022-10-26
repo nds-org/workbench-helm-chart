@@ -1,12 +1,26 @@
 
 
+# Expose mongodb on port 30017 for local development (insecure!)
+mongodb:
+  service:
+    type: NodePort
+    nodePorts:
+      mongodb: 30017
 
+config:
+  frontend:
+    live_reload: true
 
 controller:
   images:
     # use dev image (also enable config.frontend.live_reload)
     webui: "ndslabs/webui:react-dev"
 
+  # Enable DEBUG mode for Python API (auto-restart when source updates)
+  extraEnv:
+    apiserver:
+    - name: DEBUG
+      value: "true"
 
   # Override frontend mountPath (default: /usr/share/nginx/html/)
   extraVolumeMounts:
@@ -17,7 +31,7 @@ controller:
     - mountPath: /app/
       name: apisrc
 
-  # Override frontend volume to mount entire source (default mounts only the build output folder)
+  # Create volumes from the source code on the host machine
   extraVolumes:
     - name: webuisrc
       hostPath:
@@ -26,7 +40,3 @@ controller:
       hostPath:
         path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/apiserver
 
-
-config:
-  frontend:
-    live_reload: true

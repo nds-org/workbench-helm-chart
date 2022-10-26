@@ -1,2 +1,8 @@
-{{- define ".Release.namespace" -}}{{ .Release.Namespace }}{{- end -}}
-{{- define ".Release.name" -}}{{ .Release.Name }}{{- end -}}
+{{- define "workbench.hostname" -}}
+{{- if .Values.hostname -}}
+{{- .Values.hostname  -}}
+{{- else -}}
+kubernetes.docker.internal
+{{- end -}}
+{{- end -}}
+
