@@ -7,9 +7,6 @@
 include .env
 export
 
-# Set this to empty to disable creating keycloak-realm ConfigMap
-#REALM_IMPORT=
-
 define HELP_BODY
         Workbench Helm chart deployment helper Makefile
 
@@ -26,8 +23,7 @@ define HELP_BODY
           - set APISERVER_IMAGE and WEBUI_IMAGE to names of target names of Docker images
           - set APISERVER_REPO and WEBUI_REPO to URLs of target git repos (for local chart development)
           - set APISERVER_UPSTREAM_BRANCH and WEBUI_UPSTREAM_BRANCH to names of target git branches (default: main, for local chart development)
-          - enable keycloak-realm ConfigMap creating by setting REALM_IMPORT=realm_import
-          - disable keycloak-realm ConfigMap creating by setting REALM_IMPORT=""
+          - enable keycloak-realm ConfigMap creating by setting REALM_IMPORT=true
 
         General Usage:
           - `make check_all` ensure that all dependencies are installed and ready
@@ -57,7 +53,7 @@ define HELP_BODY
           - `make clean_all` (WARNING: DEBUG ONLY - this will delete your entire namespace)
 
         Misc functions:
-          - `make realm_import` (optional, enabled by default: creates a ConfigMap that can be mounted into keycloak to import a test realm)
+          - `make realm_import_secret` (optional, enabled by default: creates a ConfigMap that can be mounted into keycloak to import a test realm)
           - `make acmedns_secret` (optional: creates a Secret that can be loaded into cert-manager for use by ACMEDNS)
 
         
@@ -108,26 +104,33 @@ check_yarn:
 ##########################################################
 # Helm commands: all, dep, install, uninstall, template  #
 #########################################################
-all: check_kubectl check_helm $(REALM_IMPORT) dep install
+all: check_kubectl check_helm dep install
 
 dep: check_helm
 	helm dep up
 
-install: check_helm $(REALM_IMPORT)
+# Install using default values.yaml
+install: check_helm
 	if [ ! -d "charts/" ]; then make dep; fi
-	if [ "$(REALM_IMPORT)" == "" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH); fi
-	if [ "$(REALM_IMPORT)" != "" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.realmimport.yaml; fi
+	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH); fi
+	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.realmimport.yaml; fi
+
+# Install using defaults + values.localdev.yaml
+local: check_helm clone
+	if [ ! -d "charts/" ]; then make dep; fi
+	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml; fi
+	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml -f values.realmimport.yaml; fi
+
+# Install using defaults + localdev + values.localdev.livereload.yaml
+dev: check_helm dep clone compile
+	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml; fi
+	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml -f values.realmimport.yaml; fi
 
 uninstall: check_helm 
 	helm uninstall --wait -n $(NAMESPACE) $(NAME)
 
 template: check_helm
 	helm template --debug --dry-run $(NAME) -n $(NAMESPACE) $(CHART_PATH)
-
-dev: check_helm clone $(REALM_IMPORT)
-	helm dep up
-	helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml -f values.realmimport.yaml; \
-	make compile
 
 
 ##########################################################
@@ -162,7 +165,7 @@ push: build
 ##############################
 # kubectl (debug) commands   #
 ##############################
-realm_import: check_kubectl
+realm_import_secret: check_kubectl
 	kubectl create namespace $(NAMESPACE) >/dev/null 2>&1; \
 	kubectl get configmaps keycloak-realm -n $(NAMESPACE) || kubectl create configmap keycloak-realm -n $(NAMESPACE) --from-file=realm.json
 

@@ -65,6 +65,7 @@ config:
   frontend:
     live_reload: false
     support_email: ""
+    domain: "https://kubernetes.docker.internal"
     analytics_tracking_id: ""
     signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
     signout_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
@@ -112,12 +113,15 @@ config:
     insecure_ssl_verify: "false"   # default: true
     swagger_url: openapi/swagger-v1.yml
     namespace: "workbench"
-    singlepod: false
-    storage_class: null 
 
 
     # Define parameters about the created userapp
     userapps:
+      home_storage:
+        enabled: true
+        storage_class: nfs
+      shared_storage:
+        enabled: false
       ingress:
         enabled: true   # TODO: currently ignored
         class: nginx
@@ -128,25 +132,13 @@ config:
         annotations:
           ingress.kubernetes.io/ssl-redirect: "true"
           ingress.kubernetes.io/force-ssl-redirect: "true"
-          nginx.ingress.kubernetes.io/signin-url: "https://$host/oauth2/start?rd=https%3A%2F%2F$host%2Fmy-apps"
-          nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+          nginx.ingress.kubernetes.io/signin-url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
+          nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
           nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
   
     # TODO: Legacy config options (currently ignored)
     timeout: 30
     inactivity_timeout: 480
-    specs:
-      repo: "https://github.com/nds-org/ndslabs-specs.git"
-      branch: master
-    storage:
-      home:
-        storage_class: "nfs"
-        claim_suffix: "-home"
-      shared:
-        enabled: false
-        volume_path: "/tmp/shared"
-        storage_class: "nfs"
-        read_only: true
 
 ### Optional dependency subcharts
 
