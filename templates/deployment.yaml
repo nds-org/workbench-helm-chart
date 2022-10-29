@@ -51,9 +51,15 @@ spec:
 {{ toYaml . | indent 8 }}
 {{- end }}
 
-{{- with .Values.controller.initContainers }}
       initContainers:
-{{ toYaml . | indent 8 }}
+        - name: wait-for-oauth2-proxy
+          image: ghcr.io/groundnuty/k8s-wait-for:v1.6
+          imagePullPolicy: Always
+          args:
+            - "pod"
+            - "-lapp.kubernetes.io/component=oauth2-proxy"
+{{- if .Values.controller.extraInitContainers }}
+{{ toYaml .Values.controller.extraInitContainers | indent 8 }}
 {{- end }}
 
       volumes:
