@@ -14,7 +14,7 @@ controller:
   images:
     webui: "ndslabs/webui:react"
     apiserver: "ndslabs/apiserver:python"
-  initContainers: []
+  extraInitContainers: []
 
   # Note: labels are immutable - changing labels will require you to uninstall and then reinstall the chart
   extraLabels: {}
@@ -103,7 +103,7 @@ config:
 
     # Define our own domain and config params
     domain: "kubernetes.docker.internal"
-    insecure_ssl_verify: "true"   # default: true
+    insecure_ssl_verify: "false"   # default: true
     swagger_url: openapi/swagger-v1.yml
     namespace: "workbench"
 
@@ -141,7 +141,7 @@ config:
 
 # Enable this to run an NGINX ingress controller (if you aren't running another ingress controller)
 ingress-nginx:
-  enabled: true
+  enabled: false
   controller:
     # If you have an existing TLS secret, you can uncomment this to specify it here
     # Otherwise NGINX will generate a self-signed and use that instead
@@ -173,7 +173,7 @@ nfs-server-provisioner:
 
 # Enable this to run a local Keycloak instance (development only)
 keycloak:
-  enabled: true
+  enabled: false
   httpRelativePath: "/auth/"
   auth:
     adminUser: "admin"
@@ -219,30 +219,18 @@ keycloak:
 
 
 oauth2-proxy:
-  enabled: true
   initContainers: []
   extraArgs:
-    # Keycloak OIDC config:
-    - --provider=keycloak-oidc  # "oidc" works as well, but this gives us roles too
-    - --provider-display-name=Workbench Login
-    - --redirect-url=https://kubernetes.docker.internal/oauth2/callback
-    - --oidc-issuer-url=https://kubernetes.docker.internal/auth/realms/workbench-dev
-    - --client-id=workbench-local
+    # Github OIDC config:
+    - --provider=github  # "oidc" works as well, but this gives us roles too
+    - --client-id=changeme
+    - --client-secret=changeme
 
     # Authorization config:
-    #- --email-domain=illinois.edu
+    - --email-domain=*
     - --whitelist-domain=.docker.internal     # needed to use the "rd" query string parameter
     - --cookie-domain=.docker.internal        # forward your cookie automatically to subdomains
-    #- --cookie-samesite=lax
     - --scope=email profile openid
-    - --allowed-role=workbench-user
-
-    # Local Development Only:
-    - --insecure-oidc-skip-issuer-verification=true
-    - --insecure-oidc-allow-unverified-email=true
-    - --ssl-insecure-skip-verify=true
-    - --ssl-upstream-insecure-skip-verify=true
-    - --force-json-errors=true
   ingress:
     enabled: true
     path: /oauth2/
