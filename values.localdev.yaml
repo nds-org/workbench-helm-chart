@@ -9,35 +9,7 @@
 extraDeploy: []
 
 controller:
-  kind: Deployment   # default: Deployment
-  images:
-    webui: "ndslabs/webui:react"
-    apiserver: "ndslabs/apiserver:python"
-  initContainers:
-    - name: wait-for-keycloak
-      image: ghcr.io/groundnuty/k8s-wait-for:v1.6
-      imagePullPolicy: Always
-      args:
-        - "pod"
-        - "-lapp.kubernetes.io/component=keycloak"
-
-  # Note: labels are immutable - changing labels will require you to uninstall and then reinstall the chart
-  extraLabels: {}
-
-  extraVolumes: []
-
-  extraVolumeMounts:
-    webui: []
-    apiserver: []
-
-  extraEnv:
-    webui: []
-    apiserver: []
-
   strategy_type: "RollingUpdate"  # default: RollingUpdate
-
-  # Set DNS aliases within this container
-  hostAliases: []
 
 ingress:
   class: "nginx"
@@ -45,18 +17,6 @@ ingress:
   tls:
     - hosts:
       - "kubernetes.docker.internal"
-  api:
-    annotations:
-      #cert-manager.io/issuer: "acmedns-staging"
-      ingress.kubernetes.io/app-root: "/"
-      ingress.kubernetes.io/ssl-redirect: "true"
-      ingress.kubernetes.io/force-ssl-redirect: "true"
-  webui:
-    annotations:
-      ingress.kubernetes.io/app-root: "/"
-      ingress.kubernetes.io/ssl-redirect: "true"
-      ingress.kubernetes.io/force-ssl-redirect: "true"
-
 
 
 ### Workbench config and cutomization
@@ -64,38 +24,13 @@ ingress:
 config:
   frontend:
     live_reload: false
-    support_email: ""
+    support_email: "support@ndslabs.org"
     domain: "https://kubernetes.docker.internal"
-    analytics_tracking_id: ""
+    analytics_tracking_id: "UA-87620297-2"
     signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
     signout_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
-    customization:
-      product_name: "Workbench"
-      landing_html: "<span style='font-size:20pt;'><p>Labs Workbench is an environment where developers can prototype tools and capabilities</p><p>that help build out the NDS framework and services. In particular, it is a place that can</p><p>host the development activities of <a style='text-decoration:none;' href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects</a></p></span>"
-      favicon_path: "/favicon.svg"
-      brand_logo_path: "/favicon.svg"
-      learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
-      help_links:
-        - icon: "fa-info-circle"
-          name: "Feature Overview"
-          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview"
-        - icon: "fa-question-circle"
-          name: "FAQ"
-          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions"
-        - icon: "fa-book"
-          name: "User's Guide"
-          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide"
-        - icon: "fa-code-fork"
-          name: "Developer's Guide"
-          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide"
-        - icon: "fa-gavel"
-          name: "Acceptable Use Policy"
-          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy"
   
   backend:
-    oauth:
-      userinfoUrl: https://kubernetes.docker.internal/oauth2/userinfo
-
     # Point at internal mongodb
     mongo:
       uri: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
@@ -123,7 +58,6 @@ config:
       shared_storage:
         enabled: false
       ingress:
-        enabled: true   # TODO: currently ignored
         class: nginx
         tls:
           hosts:
@@ -152,19 +86,11 @@ ingress-nginx:
     #  default-ssl-certificate: workbench/ndslabs-tls
     hostPort:
       enabled: true
-    kind: Deployment
 
 
 # Enable this to use an external NFS server to provision user volumes (e.g. nfs-condo)
 nfs-client-provisioner:
   enabled: false   # WARNING: experimental
-  nfs:
-    server: "workbench-nfs-server-provisioner.workbench.svc.cluster.local"
-    path: "/export"
-    mountOptions:
-    - tcp
-    - nfsvers=3
-
     
 # Enable this to run a local NFS server (development only)      
 nfs-server-provisioner:
@@ -200,20 +126,9 @@ keycloak:
           path: "realm.json"
   global:
     storageClass: "hostpath"
-    postgresql:
-      auth:
-        postgresPassword: workbench
-        password: workbench
-  postgresql:
-    enabled: true
-  service:
-    type: ClusterIP
   ingress:
-    enabled: true
     className: nginx
-    hostname: "kubernetes.docker.internal"
     tls: true
-    path: /auth/
     annotations:
       kubernetes.io/ingress.class: nginx
 
@@ -225,31 +140,9 @@ keycloak:
 
 
 oauth2-proxy:
-  enabled: true
+  serviceAccount:
+    name: workbench
   # Need to define a custom role and binding to wait-for-keycloak
-  extraDeploy:
-    - apiVersion: rbac.authorization.k8s.io/v1
-      kind: Role
-      metadata:
-        name: wait-for-pods
-        namespace: workbench
-      rules:
-      - apiGroups: [""]
-        resources: ["pods"]
-        verbs: ["get", "watch", "list"]
-    - apiVersion: rbac.authorization.k8s.io/v1
-      kind: RoleBinding
-      metadata:
-        name: oauth2-proxy-wait-for-pods
-        namespace: workbench
-      subjects:
-      - kind: ServiceAccount
-        name: workbench-oauth2-proxy
-        namespace: workbench
-      roleRef:
-        apiGroup: rbac.authorization.k8s.io
-        kind: Role 
-        name: wait-for-pods
   initContainers:
     - name: wait-for-keycloak
       image: ghcr.io/groundnuty/k8s-wait-for:v1.6

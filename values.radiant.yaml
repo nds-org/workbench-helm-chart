@@ -1,0 +1,104 @@
+# Custom base values for NCSA Radiant Openstack (V2 Workbench).
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+ingress:
+  api:
+    annotations:
+      cert-manager.io/cluster-issuer: "acmedns-issuer"
+
+config:
+  frontend:
+    domain: "changeme.ndslabs.org"
+    signin_url: "https://changeme.ndslabs.org/oauth2/start?rd=https%3A%2F%2Fchangeme.ndslabs.org%2Fmy-apps"
+    signout_url: "https://changeme.ndslabs.org/oauth2/sign_out?rd=https%3A%2F%2Fchangeme.ndslabs.org%2F"
+  
+  backend:
+    domain: "changeme.ndslabs.org"
+    oauth:
+      userinfoUrl: https://changeme.ndslabs.org/oauth2/userinfo
+
+    mongo:
+      uri: "mongodb://workbench:changeme@workbench-mongodb.cheesehub-next.svc.cluster.local:27017/ndslabs?authSource=admin"
+
+    # Point at shared Keycloak instance + realm
+    keycloak:
+      hostname: "https://keycloak.workbench.ndslabs.org/auth"
+      realmName: "changeme"
+
+    # Define parameters about the created userapp
+    userapps:
+      home_storage:
+        enabled: true
+        storage_class: "nfs-taiga"
+      shared_storage:
+        enabled: false 
+      ingress:
+        tls:
+          hosts:
+           - changeme.ndslabs.org
+           - "*.changeme.ndslabs.org"
+
+
+### Optional dependency subcharts
+
+mongodb:
+  enabled: true
+  global:
+    storageClass: "longhorn"
+  updateStrategy:
+    type: Recreate
+  auth:
+    rootUser: workbench
+    rootPassword: changeme
+
+# Disable local Ingress controller (use shared instance)
+ingress-nginx:
+  enabled: false
+
+# Disable NFS client (use cluster built-in)
+nfs-client-provisioner:
+  enabled: false
+
+# Disable local NFS server
+nfs-server-provisioner:
+  enabled: false
+
+# Disable local Keycloak instance (use shared instance)
+keycloak:
+  enabled: false
+
+oauth2-proxy:
+  global:
+    storageClass: "longhorn"
+  ingress:
+    hostname: changeme.ndslabs.org
+    tls:
+      - hosts:
+          - changeme.ndslabs.org
+          - "*.changeme.ndslabs.org"
+  extraArgs:
+    # Keycloak OIDC config:
+    - --provider=keycloak-oidc  # "oidc" works as well, but this gives us roles too
+    - --provider-display-name=Workbench Login
+    - --redirect-url=https://changeme.ndslabs.org/oauth2/callback
+    - --oidc-issuer-url=https://keycloak.workbench.ndslabs.org/auth/realms/changeme
+    - --client-id=cilogon
+    - --client-secret=changeme
+
+    # Authorization config:
+    #- --email-domain=illinois.edu
+    - --whitelist-domain=.changeme.ndslabs.org     # needed to use the "rd" query string parameter
+    - --cookie-domain=.ndslabs.org        # forward your cookie automatically to subdomains
+    #- --cookie-samesite=lax
+    - --scope=email profile openid
+    - --allowed-role=workbench-user
+
+    # Local Development Only:
+    - --insecure-oidc-allow-unverified-email=true
+    #- --ssl-insecure-skip-verify=true
+    #- --ssl-upstream-insecure-skip-verify=true
+    - --force-json-errors=true
+  
+
+

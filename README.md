@@ -45,7 +45,7 @@ These options affect the Deployment resource created by this chart.
 | `controller.kind` | string | Kind to use for application manifest | `Deployment` |
 | `controller.images.webui` | string | Image to use for `webui` container | `ndslabs/webui:react` |
 | `controller.images.apiserver` | string | Image to use for `apiserver` container | `ndslabs/webui:react` |
-| `controller.initContainers` | array[map] | Specify `initContainers` for main application | `[]` |
+| `controller.extraInitContainers` | array[map] | Specify `initContainers` for main application | `[]` |
 | `controller.extraLabels` | map | Extra labels to apply to the controller/service | `{}` |
 | `controller.extraEnv.webui` | array[map] | Additional `env` to set for `webui` container | `[]` |
 | `controller.extraEnv.apiserver` | array[map] | Additional `env` variables to set for `apiserver` container | `[]` |
@@ -67,31 +67,47 @@ These options affect the Ingress resources created by this chart.
 ### Workbench Options
 These options affect the internals of Workbench and the customization of the WebUI.
 
+#### Frontend: Domain + Auth + UI Customizations
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
+| `config.frontend.domain` | string | Domain name (used by backend for self-reference) | `https://changeme.ndslabs.org` |
 | `config.frontend.live_reload` | bool | If true, change to use dev image ports (instead of port 80) when running dev image | `false` |
-| `config.frontend.signin_url` | string | URL to route frontend requests to "Log In"  | `https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps` |
-| `config.frontend.signout_url` | string | URL to route frontend requests to "Log Out"  | `https://kubernetes.docker.internal/oauth2/sign_out?rd=https%3A%2F%2Fkubernetes.docker.internal%2F` |
-| `config.frontend.domain` | string | Domain name (used by backend for self-reference) | `https://kubernetes.docker.internal` |
+| `config.frontend.signin_url` | string | URL to route frontend requests to "Log In"  | `https://changeme.ndslabs.org/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps` |
+| `config.frontend.signout_url` | string | URL to route frontend requests to "Log Out"  | `https://changeme.ndslabs.org/oauth2/sign_out?rd=https%3A%2F%2Fkubernetes.docker.internal%2F` |
 | `config.frontend.customization.product_name` | string | Human-friendly name to use for this product in the navbar | `Workbench` |
 | `config.frontend.customization.landing_html` | string | HTML string to use as the splash text on the Landing Page | existing HTML |
 | `config.frontend.customization.favicon_path` | string | Image to use as the favicon | `/favicon.svg` |
 | `config.frontend.customization.brand_logo_path` | string | Image to use as the brand log (top-left of navbar) | `/favicon.svg` |
+| `config.frontend.customization.landing_header_1` | string | Header to display on the landing page (section 01) | `Find the tools you need` |
+| `config.frontend.customization.landing_section_1` | string | Section body to display on the landing page (section 01) | `Search our catalog of web-based research and software tools. We offer over 30 different software tools that fit many common scenarios encountered in research software development.  Find a set of tools to help you build out a new software product or extend an existing one.` |
+| `config.frontend.customization.landing_header_2` | string | Header to display on the landing page (section 02) | `Run the tools on our cloud service` |
+| `config.frontend.customization.landing_section_2` | string | Section body to display on the landing page (section 02) | `Once you've narrowed down your choices, launch your desired tool set on our cloud resources. Access your running applications using our web interface, and start integrating the tools and shaping your software product.` |
 | `config.frontend.customization.learn_more_url` | string | (currently unused) URL to use for the "Learn More" button on the Landing Page | `http://www.nationaldataservice.org/platform/workbench.html` |
 | `config.frontend.customization.help_links` | array | List of links to use in the navbar "Help" section | existing URLs |
-| `config.backend.oauth.userinfoUrl` | string | URL | `https://kubernetes.docker.internal/oauth2/userinfo` |
+
+#### Backend: Domain + Keycloak + MongoDB + UserApp Kubernetes Config
+| `config.backend.domain` | string | URL of the apiserver | `https://changeme.ndslabs.org` |
+| `config.backend.namespace` | string | Namespace where workbench shouldl aunch its applications | `workbench` |
+| `config.backend.oauth.userinfoUrl` | string | URL | `https://changeme.ndslabs.org/oauth2/userinfo` |
 | `config.backend.mongo.uri` | string | URI pointing at running MongoDB instance | `mongodb://workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs` |
 | `config.backend.mongo.db` | string | Database name to use in MongoDB | `ndslabs` |
-| `config.backend.mongo.keycloak.hostname` | string | URI pointing at running Keycloak instance | `https://kubernetes.docker.internal/auth` |
-| `config.backend.keycloak.realmName` | string | Realm name to use in Keycloak | `workbench-dev` |
-| `config.backend.keycloak.clientId` | string | OIDC ClientID to use for Keycloak auth | `workbench-local` |
+| `config.backend.keycloak.hostname` | string | URI pointing at running Keycloak instance | `https://keycloak.workbench.ndslabs.org/auth` |
+| `config.backend.keycloak.realmName` | string | Realm name to use in Keycloak | `changeme` |
+| `config.backend.keycloak.clientId` | string | OIDC ClientID to use for Keycloak auth | `changeme` |
 | `config.backend.keycloak.clientSecret` | string | OIDC ClientSecret to use for Keycloak auth | `""` |
 | `config.backend.insecure_ssl_verify` | string | If `false`, skip checking insecure/invalid TLS certificates | `true` |
-| `config.backend.storage.home.storage_class` | string | StorageClass to use for user Home volumes | `nfs` |
-| `config.backend.storage.home.claim_suffix` | string | Suffix to append to names of user Home volumes | `-home` |
-| `config.backend.storage.shared.enabled` | bool | If true, mount a Shared volume to each UserApp | `false` |
-| `config.backend.storage.shared.volume_path` | string | Path within the container to mount the Shared volume | `/tmp/shared` |
-| `config.backend.storage.shared.read_only` | bool | If true, mount the Shared volume as ReadOnly | `true` |
+| `config.backend.swagger_url` | string | Override the URL of the Swagger spec for the running apiserver | `openapi/swagger-v1.yml` |
+| `config.backend.userapps.singlepod` | string | PVC name to use for mounting shared data | `false` |
+| `config.backend.userapps.service_account_name` | string | Name of the ServiceAccount to use for each UserApp | `workbench` |
+| `config.backend.userapps.home_storage.enabled` | bool | If true, mount user home folder to each UserApp | `false` |
+| `config.backend.userapps.home_storage.storage_class` | string | StorageClass to use for user Home volumes | `` |
+| `config.backend.userapps.home_storage.claim_suffix` | string | Suffix to append to names of user Home volumes | `home-data` |
+| `config.backend.userapps.shared_storage.enabled` | bool | If true, mount a Shared volume to each UserApp | `false` |
+| `config.backend.userapps.shared_storage.mount_path` | string | Path within the container to mount the Shared volume | `/shared` |
+| `config.backend.userapps.shared_storage.read_only` | bool | If true, mount the Shared volume as ReadOnly | `true` |
+| `config.backend.userapps.shared_storage.claim_name` | string | PVC name to use for mounting shared data | `workbench-shared-data` |
+| `config.backend.userapps.ingress.annotations` | map | Additional annotations to add to UserApp Ingress rules | `<auth annotations, etc>` |
+| `config.backend.userapps.ingress.tls` | array[map] | TLS config to set for Ingress resources | `[]` |
 
 ### Misc
 Other miscellaneous top-level configuration options.

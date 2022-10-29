@@ -68,6 +68,11 @@ config:
       favicon_path: "/favicon.svg"
       brand_logo_path: "/favicon.svg"
       learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
+      landing_header_1: "Find the tools you need"
+      landing_section_1: "Search our catalog of web-based research and software tools. We offer over 30 different software tools that fit many common scenarios encountered in research software development.  Find a set of tools to help you build out a new software product or extend an existing one."
+      landing_header_2: "Run the tools on our cloud service"
+      landing_section_2: "Once you've narrowed down your choices, launch your desired tool set on our cloud resources. Access your running applications using our web interface, and start integrating the tools and shaping your software product."
+    
       help_links:
         - icon: "fa-info-circle"
           name: "Feature Overview"
@@ -97,8 +102,8 @@ config:
     # Point at internal Keycloak instance + imported realm
     keycloak:
       hostname: "https://kubernetes.docker.internal/auth"
-      realmName: "workbench-dev"
-      clientId: "workbench-local"
+      realmName: "changeme"
+      clientId: "changeme"
       clientSecret: ""
 
     # Define our own domain and config params
@@ -111,7 +116,7 @@ config:
     # Define parameters about the created userapp
     userapps:
       singlepod: false
-      serviceAccountName: workbench
+      service_account_name: workbench
       home_storage:
         enabled: true
         claim_suffix: "home-data"
@@ -231,6 +236,9 @@ oauth2-proxy:
     - --whitelist-domain=.docker.internal     # needed to use the "rd" query string parameter
     - --cookie-domain=.docker.internal        # forward your cookie automatically to subdomains
     - --scope=email profile openid
+
+    # Local development only
+    - --insecure-oidc-allow-unverified-email=true
   ingress:
     enabled: true
     path: /oauth2/
@@ -246,7 +254,7 @@ mongodb:
   autoimport:
     enabled: true
     annotations:
-      "helm.sh/hook": post-upgrade
+      "helm.sh/hook": post-install
       "helm.sh/hook-delete-policy": before-hook-creation
     env:
       - name: MONGO_URI
@@ -255,12 +263,13 @@ mongodb:
         value: "ndslabs"
       - name: GIT_REPO
         value: "https://github.com/nds-org/ndslabs-specs"
+      - name: GIT_BRANCH
+        value: "master"
   architecture: standalone   # WARNING: experimental
   #replicaCount: 3
   auth:
-    replicaSetKey: changeme
     rootUser: workbench
-    rootPassword: workbench
+    rootPassword: changeme
 
   # TODO: Test AWS + GKE PVs
   persistent:
