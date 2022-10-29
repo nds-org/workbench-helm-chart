@@ -18,23 +18,28 @@ define HELP_BODY
           - `git` (optional)
           - `yarn` (optional)
 
-        OPTIONAL CONFIG (see .env):
-          - change NAME= and NAMESPACE= to match where you want to release with Helm (default: workbench)
-          - set APISERVER_IMAGE and WEBUI_IMAGE to names of target names of Docker images
-          - set APISERVER_REPO and WEBUI_REPO to URLs of target git repos (for local chart development)
-          - set APISERVER_UPSTREAM_BRANCH and WEBUI_UPSTREAM_BRANCH to names of target git branches (default: main, for local chart development)
-          - enable keycloak-realm ConfigMap creating by setting REALM_IMPORT=true
+
+        Configuration (see .env):
+          - (required) set KUBE_CONTEXT= to match the name of your kubectl context - see `kubectl config get-contexts` for valid names
+          - (required) change NAME= and NAMESPACE= to match where you want to release with Helm (default: workbench/workbench)
+          - (optional) set APISERVER_IMAGE and WEBUI_IMAGE to names of target names of Docker images
+          - (optional) set APISERVER_REPO and WEBUI_REPO to URLs of target git repos (for local chart development)
+          - (optional) set APISERVER_UPSTREAM_BRANCH and WEBUI_UPSTREAM_BRANCH to names of target git branches (default: main, for local chart development)
+          - (optional) enable keycloak-realm ConfigMap creating by setting REALM_IMPORT=true
 
         General Usage:
           - `make check_all` ensure that all dependencies are installed and ready
           - `make help` or `make usage` prints this message  <-- you are here
 
         To install Workbench:
+          - <modify .env locally>
           - <modify values.yaml locally>
           - `make all` to run both `make dep` and `make install`
           - `make dep` to pull Helm dependency subcharts
           - `make template` to perform a dry-run of Helm chart generation (for debugging)
-          - `make` or `make install` to perform Helm install and/or upgrade (optionally includes `make realm_import`, enabled by default)
+          - `make` or `make install` to perform Helm install and/or upgrade with default values (optionally includes `make realm_import_secret`, enabled by default)
+          - `make local` to use localdev values (optionally includes `make realm_import_secret`, enabled by default)
+          - `make dev` to use localdev values and live reload enabled (optionally includes `make realm_import_secret`, enabled by default)
           - `make status` or `make watch` to check status or watch for changes to Pods
           - `make describe` to check Pod events for startup errors
           - `make target=api logs` or `make target=proxy logs` to check Pod logs for runtime errors
@@ -110,19 +115,22 @@ dep: check_helm
 	helm dep up
 
 # Install using default values.yaml
-install: check_helm
+install: check_required
+	kubectl config use-context $(KUBE_CONTEXT) || exit 1
 	if [ ! -d "charts/" ]; then make dep; fi
 	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH); fi
 	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.realmimport.yaml; fi
 
 # Install using defaults + values.localdev.yaml
-local: check_helm clone
+local: check_required clone
+	kubectl config use-context $(KUBE_CONTEXT) || exit 1
 	if [ ! -d "charts/" ]; then make dep; fi
 	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml; fi
 	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml -f values.realmimport.yaml; fi
 
 # Install using defaults + localdev + values.localdev.livereload.yaml
-dev: check_helm dep clone compile
+dev: check_required dep clone compile
+	kubectl config use-context $(KUBE_CONTEXT) || exit 1
 	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml; fi
 	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml -f values.realmimport.yaml; fi
 
