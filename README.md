@@ -86,8 +86,11 @@ These options affect the internals of Workbench and the customization of the Web
 | `config.frontend.customization.help_links` | array | List of links to use in the navbar "Help" section | existing URLs |
 
 #### Backend: Domain + Keycloak + MongoDB + UserApp Kubernetes Config
+
+| Path | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
 | `config.backend.domain` | string | URL of the apiserver | `https://changeme.ndslabs.org` |
-| `config.backend.namespace` | string | Namespace where workbench shouldl aunch its applications | `workbench` |
+| `config.backend.namespace` | string | Namespace where workbench should launch its applications | `workbench` |
 | `config.backend.oauth.userinfoUrl` | string | URL | `https://changeme.ndslabs.org/oauth2/userinfo` |
 | `config.backend.mongo.uri` | string | URI pointing at running MongoDB instance | `mongodb://workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs` |
 | `config.backend.mongo.db` | string | Database name to use in MongoDB | `ndslabs` |
@@ -100,7 +103,7 @@ These options affect the internals of Workbench and the customization of the Web
 | `config.backend.userapps.singlepod` | string | PVC name to use for mounting shared data | `false` |
 | `config.backend.userapps.service_account_name` | string | Name of the ServiceAccount to use for each UserApp | `workbench` |
 | `config.backend.userapps.home_storage.enabled` | bool | If true, mount user home folder to each UserApp | `false` |
-| `config.backend.userapps.home_storage.storage_class` | string | StorageClass to use for user Home volumes | `` |
+| `config.backend.userapps.home_storage.storage_class` | string | StorageClass to use for user Home volumes | `""` |
 | `config.backend.userapps.home_storage.claim_suffix` | string | Suffix to append to names of user Home volumes | `home-data` |
 | `config.backend.userapps.shared_storage.enabled` | bool | If true, mount a Shared volume to each UserApp | `false` |
 | `config.backend.userapps.shared_storage.mount_path` | string | Path within the container to mount the Shared volume | `/shared` |
