@@ -81,7 +81,7 @@ check_all: check_required check_optional
 	echo "$(SUCCESS) all dependencies are installed and ready."
 
 check_required: check_kubectl check_helm
-	echo "$(SUCCESS) all reauired dependencies are installed and ready."
+	echo "$(SUCCESS) all required dependencies are installed and ready."
 
 check_optional: check_git check_docker check_yarn
 	echo "$(SUCCESS) all optional dependencies are installed and ready."
