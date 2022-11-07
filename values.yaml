@@ -63,6 +63,7 @@ config:
     signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
     signout_url: "https://kubernetes.docker.internal/oauth2/sign_out?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
     customization:
+      org_name: "NCSA"
       product_name: "Workbench"
       landing_html: "<p>Labs Workbench is an environment where developers can prototype tools and capabilities</p><p>that help build out the NDS framework and services. In particular, it is a place that can</p><p>host the development activities of <a style='text-decoration:none;' href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects</a></p>"
       favicon_path: "/favicon.svg"

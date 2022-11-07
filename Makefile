@@ -89,6 +89,8 @@ check_optional: check_git check_docker check_yarn
 check_kubectl:
 	which -s kubectl || (echo '$(FAILED) Please install kubectl to use this Helm chart' && exit 1)
 	echo "$(SUCCESS) kubectl is installed and ready."
+	make check_context
+	echo "$(SUCCESS) kubectl is using context: $(KUBE_CONTEXT)"
 
 check_helm:
 	which -s helm || (echo '$(FAILED) Please install helm v3 to use this Helm chart' && exit 1)
@@ -106,6 +108,10 @@ check_yarn:
 	which -s yarn || (echo '$(FAILED) Please install yarn to use "make rebuild"' && exit 1)
 	echo "$(SUCCESS) yarn is installed and ready."
 
+check_context:
+	kubectl config use-context $(KUBE_CONTEXT) || exit 1
+	echo "$(SUCCESS) kubectl is using context: $(KUBE_CONTEXT)."
+
 ##########################################################
 # Helm commands: all, dep, install, uninstall, template  #
 #########################################################
@@ -116,21 +122,18 @@ dep: check_helm
 
 # Install using default values.yaml
 install: check_required
-	kubectl config use-context $(KUBE_CONTEXT) || exit 1
 	if [ ! -d "charts/" ]; then make dep; fi
 	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH); fi
 	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.realmimport.yaml; fi
 
 # Install using defaults + values.localdev.yaml
 local: check_required clone
-	kubectl config use-context $(KUBE_CONTEXT) || exit 1
 	if [ ! -d "charts/" ]; then make dep; fi
 	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml; fi
 	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml -f values.realmimport.yaml; fi
 
 # Install using defaults + localdev + values.localdev.livereload.yaml
 dev: check_required dep clone compile
-	kubectl config use-context $(KUBE_CONTEXT) || exit 1
 	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml; fi
 	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml -f values.realmimport.yaml; fi
 
