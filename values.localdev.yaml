@@ -26,7 +26,7 @@ config:
     live_reload: false
     support_email: "support@ndslabs.org"
     domain: "https://kubernetes.docker.internal"
-    analytics_tracking_id: "UA-87620297-2"
+    analytics_tracking_id: ""
     signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
     signout_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
   
@@ -141,6 +141,7 @@ keycloak:
 
 oauth2-proxy:
   serviceAccount:
+    enabled: false
     name: workbench
   # Need to define a custom role and binding to wait-for-keycloak
   initContainers:
@@ -196,9 +197,9 @@ mongodb:
       - name: MONGO_URI
         value: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
       - name: GIT_REPO
-        value: "https://github.com/cheese-hub/catalog"
+        value: "https://github.com/nds-org/ndslabs-specs"
       - name: GIT_BRANCH
-        value: "update-logo-paths-for-react"
+        value: "master"
   architecture: standalone   # WARNING: experimental
   #replicaCount: 3
   auth:
