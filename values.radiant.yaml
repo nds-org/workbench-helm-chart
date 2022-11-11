@@ -20,6 +20,7 @@ config:
   
   backend:
     domain: "changeme.ndslabs.org"
+    insecure_ssl_verify: "true"
     oauth:
       userinfoUrl: https://changeme.ndslabs.org/oauth2/userinfo
 
