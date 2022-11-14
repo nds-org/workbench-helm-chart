@@ -40,6 +40,11 @@ config:
       shared_storage:
         enabled: false 
       ingress:
+        annotations:
+          ingress.kubernetes.io/auth-type: forward
+          ingress.kubernetes.io/auth-url: "https://changeme.ndslabs.org/oauth2/auth"
+          ingress.kubernetes.io/signin-url: "https://changeme.ndslabs.org/oauth2/start?rd=https%3A%2F%2Fchangeme.ndslabs.org%2Fmy-apps"
+          ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
         tls:
           - hosts:
              - changeme.ndslabs.org
