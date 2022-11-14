@@ -149,8 +149,8 @@ template: check_helm
 ##########################################################
 clone: check_git
 	if [ ! -d "src/" ]; then \
-	git clone $(APISERVER_REPO) src/apiserver/; \
-	git clone $(WEBUI_REPO) src/webui/; \
+	git clone $(APISERVER_REPO) -b $(APISERVER_UPSTREAM_BRANCH) src/apiserver/; \
+	git clone $(WEBUI_REPO) -b $(WEBUI_UPSTREAM_BRANCH) src/webui/; \
 	fi
 
 pull: clone
