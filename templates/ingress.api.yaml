@@ -7,7 +7,9 @@ metadata:
     ingress.kubernetes.io/app-root: "/"
     ingress.kubernetes.io/ssl-redirect: "true"
     ingress.kubernetes.io/force-ssl-redirect: "true"
+{{ if .Values.ingress.api.annotations | default false }}
     {{ toYaml .Values.ingress.api.annotations | nindent 4 }}
+{{ end }}
 spec:
 {{ if .Values.ingress.class | default false }}
   ingressClassName: {{ .Values.ingress.class }}

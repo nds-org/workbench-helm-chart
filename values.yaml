@@ -40,17 +40,10 @@ ingress:
     - hosts:
       - "kubernetes.docker.internal"
   api:
-    annotations:
+    annotations: {}
       #cert-manager.io/issuer: "acmedns-staging"
-      ingress.kubernetes.io/app-root: "/"
-      ingress.kubernetes.io/ssl-redirect: "true"
-      ingress.kubernetes.io/force-ssl-redirect: "true"
   webui:
-    annotations:
-      ingress.kubernetes.io/app-root: "/"
-      ingress.kubernetes.io/ssl-redirect: "true"
-      ingress.kubernetes.io/force-ssl-redirect: "true"
-
+    annotations: {}
 
 
 ### Workbench config and cutomization
@@ -135,9 +128,9 @@ config:
         annotations:
           ingress.kubernetes.io/ssl-redirect: "true"
           ingress.kubernetes.io/force-ssl-redirect: "true"
-          ingress.kubernetes.io/signin-url: "https://$host/oauth2/start?rd=https%3A%2F%2F$host%2Fmy-apps"
-          ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
-          ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
+          #ingress.kubernetes.io/signin-url: "https://$host/oauth2/start?rd=https%3A%2F%2F$host%2Fmy-apps"
+          #ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+          #ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
   
     # TODO: Legacy config options (currently ignored)
     timeout: 30
