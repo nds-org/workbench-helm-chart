@@ -12,8 +12,8 @@ extraDeploy: []
 controller:
   kind: Deployment   # default: Deployment
   images:
-    webui: "ndslabs/webui:react"
-    apiserver: "ndslabs/apiserver:python"
+    webui: "ndslabs/webui:2.0.0"
+    apiserver: "ndslabs/apiserver:2.0.0"
   extraInitContainers: []
 
   # Note: labels are immutable - changing labels will require you to uninstall and then reinstall the chart
