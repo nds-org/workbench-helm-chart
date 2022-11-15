@@ -39,8 +39,8 @@ spec:
     spec:
 
 # Service Account Name
-{{- with .Values.controller.serviceAccountName }}
-      serviceAccountName: {{ .Values.controller.serviceAccountName }}
+{{- with .Values.controller.serviceAccount.name }}
+      serviceAccountName: {{ .Values.controller.serviceAccount.name }}
 {{- else }}
       serviceAccountName: {{ .Release.Name }}
 {{- end }}

@@ -4,8 +4,6 @@
 
 ### Kubernetes deployment options
 
-
-
 # Need to define a custom role and binding to wait-for-keycloak
 extraDeploy: []
 
@@ -20,6 +18,12 @@ controller:
   extraLabels: {}
 
   extraVolumes: []
+
+  # Create service account or use an existing one
+  serviceAccount:
+    # defaults to release name
+    # name: workbench
+    create: true
 
   extraVolumeMounts:
     webui: []
