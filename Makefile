@@ -168,7 +168,7 @@ build: check_docker clone
 	docker build -t $(WEBUI_IMAGE) src/webui/
 
 push: build
-	docker push $(WEBUI_IMAGE)-dev
+	docker push $(WEBUI_IMAGE)-live
 	docker push $(APISERVER_IMAGE)
 	docker push $(WEBUI_IMAGE)
 
@@ -209,6 +209,7 @@ restart: check_kubectl
      
 clean: check_kubectl
 	kubectl delete pvc -n $(NAMESPACE) --all
+	kubectl delete serviceaccount -n $(NAMESPACE) $(NAME)
 
 clean_all: check_helm check_kubectl
 	make uninstall 2>&1; \

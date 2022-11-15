@@ -211,7 +211,7 @@ mongodb:
       - name: GIT_REPO
         value: "https://github.com/nds-org/ndslabs-specs"
       - name: GIT_BRANCH
-        value: "main"
+        value: "develop"
   architecture: standalone   # WARNING: experimental
   #replicaCount: 3
   auth:
