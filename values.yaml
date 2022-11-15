@@ -2,214 +2,292 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# V2
-frontend:
-  domain: "workbench.ndslabs.org"
-  subdomain_prefix: "www"
-  support_email: ""
-  analytics_tracking_id: ""
-  signin_url: "https://www.workbench.ndslabs.org/oauth2/start?rd=https%3A%2F%2Fwww.workbench.ndslabs.org%2Fmy-apps"
-  customization:
-    product_name: "Workbench"
-    landing_html: "<span style='font-size:20pt;'><p>Labs Workbench is an environment where developers can prototype tools and capabilities</p><p>that help build out the NDS framework and services. In particular, it is a place that can</p><p>host the development activities of <a style='text-decoration:none;' href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects</a></p></span>"
-    favicon_path: "/favicon.svg"
-    brand_logo_path: "/favicon.svg"
-    learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
-    help_links:
-      - icon: "fa-info-circle"
-        name: "Feature Overview"
-        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview"
-      - icon: "fa-question-circle"
-        name: "FAQ"
-        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions"
-      - icon: "fa-book"
-        name: "User's Guide"
-        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide"
-      - icon: "fa-code-fork"
-        name: "Developer's Guide"
-        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide"
-      - icon: "fa-gavel"
-        name: "Acceptable Use Policy"
-        url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy"
+### Kubernetes deployment options
 
-backend:
-  timeout: 30
-  inactivity_timeout: 480
-  specs:
-    repo: "https://github.com/nds-org/ndslabs-specs.git"
-    branch: master
-  storage:
-    home:
-      storage_class: "nfs-condo"
-      claim_suffix: "-home"
-    shared:
-      enabled: false
-      volume_path: "/tmp/shared"
-      storage_class: "nfs-condo"
-      read_only: true
-  smtp:
-    # Specify host/port to use standalone SMTP
-    host: # smtp.your.edu
-    port: # 25
-    # Specify user/pass to use Gmail SMTP
-    gmail_user: 
-    gmail_pass: 
-
-
+# Need to define a custom role and binding to wait-for-keycloak
+extraDeploy: []
 
 controller:
-  kind: Deployment
-  labels:
-    app: workbench
+  kind: Deployment   # default: Deployment
   images:
-    etcd: "quay.io/coreos/etcd:v3.3"
-    webui: "ndslabs/angular-ui:1.3.2"
-    apiserver: "ndslabs/apiserver:1.3.2"
-  strategy_type: "RollingUpdate"
+    webui: "ndslabs/webui:2.0.0"
+    apiserver: "ndslabs/apiserver:2.0.0"
+  extraInitContainers: []
+
+  # Note: labels are immutable - changing labels will require you to uninstall and then reinstall the chart
+  extraLabels: {}
+
+  extraVolumes: []
+
+  # Create service account or use an existing one
+  serviceAccount:
+    # defaults to release name
+    # name: workbench
+    create: true
+
+  extraVolumeMounts:
+    webui: []
+    apiserver: []
+
+  extraEnv:
+    webui: []
+    apiserver: []
+
+  strategy_type: "RollingUpdate"  # default: RollingUpdate
+
+  # Set DNS aliases within this container
+  hostAliases: []
 
 ingress:
+  host: "kubernetes.docker.internal"
   tls:
-    enabled: true
-    hosts:
-      - "*.workbench.ndslabs.org"
-      - "www.workbench.ndslabs.org"
-    secretName: "ndslabs-tls"
-  root:
-    annotations:
-      cluster_issuer: "acmedns-issuer"
-      issuer: ""
-  workbench:
+    - hosts:
+      - "kubernetes.docker.internal"
+  api:
     annotations: {}
-      
-  
-  userapps:
-    annotations:
-      # kubernetes.io/ingress.class: "traefik"
-      signin_url: "https://www.workbench.ndslabs.org/oauth2/start?rd=https%3A%2F%2Fwww.workbench.ndslabs.org%2Fmy-apps"
-      auth_url: "https://www.workbench.ndslabs.org/oauth2/auth"
-      auth_response_headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
-  
-
-### TODO
-
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #  cpu: 100m
-  #  memory: 128Mi
-  # requests:
-  #  cpu: 100m
-  #  memory: 128Mi
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
+      #cert-manager.io/issuer: "acmedns-staging"
+  webui:
+    annotations: {}
 
 
+### Workbench config and cutomization
 
-#### V1
-
-
-workbench:
-  dev:
-    enabled: false
-    uisrc: ""
-  name: "Labs Workbench"
-  landing_html: >-
-    <p>Labs Workbench is an environment where developers can prototype tools and capabilities that help build out the NDS framework and services.</p>
-    <p>In particular, it is a place that can host the development activities of <a href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects.</a></p>
-  ingress_class: ""
-  brand_logo_path: "../asset/png/favicon-32x32.png"
-  favicon_path: "../asset/png/favicon-16x16.png"
-  learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
-  help_links: "[{ \"name\": \"Feature Overview\", \"icon\": \"fa-info-circle\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview\" },{ \"name\": \"F.A.Q.\", \"icon\": \"fa-question-circle\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions\"}, { \"name\": \"User's Guide\", \"icon\": \"fa-book\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide\" }, { \"name\": \"Developer's Guide\", \"icon\": \"fa-code-fork\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide\" },{ \"name\": \"Acceptable Use Policy\",  \"icon\": \"fa-gavel\", \"url\": \"https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy\" }]"
-  domain: "local.ndslabs.org"
-  subdomain_prefix: "www"
-  volume_name: "global"
-  volume_path: "/ndslabs/data/volumes"
-  etcd_path: "/ndslabs/data/etcd"
-  support_email: "ndslabs-support@nationaldataservice.org"
-  analytics_tracking_id: ""
-  require_account_approval: true
-  strategyType: "RollingUpdate"       # or "Recreate" if using RWO data volume
-  specs:
-    repo: "https://github.com/nds-org/ndslabs-specs.git"
-    branch: "master"
-  images:
-    webui: "ndslabs/angular-ui:1.3.2"
-    apiserver: "ndslabs/apiserver:1.3.2"
-    etcd: "quay.io/coreos/etcd:v3.3"
-    smtp: "namshi/smtp:latest"
-  etcd_storage:
-    persistent:
-      # Values can be "false" for no persistent storage, "aws" for awsElasticBlockStore,
-      # or "gce" for gcePersistentDisk
-      type: false
-      # If using awsElasticBlockStore enter the EBS volume id, if using gcePersistentDisk
-      # enter the persistent disk name
-      volume_id:
-    storage_class:
-    access_mode: "ReadWriteOnce"
-    size: "1Gi"
-  home_storage:
-    home_pvc_suffix: "-home"
-    pvc_storage_class: "nfs"
-  shared_storage:
-    enabled: false
-    volume_name: "shared"
-    volume_path: "/tmp/shared"
-    read_only: true
-  timeout: 30
-  inactivity_timeout: 480
-
-  # Enable optional UI features (default is true)
-  advanced_features:
-    show_config: true
-    show_logs: true
-    show_console: true
-    show_remove_service: true
-    show_edit_service: true
-    show_service_help_icon: true
-    show_create_spec: true
-    show_import_spec: true
-    show_file_manager: true
-
-oauth:
-  enabled: false
-  signin_url: "https://$host/login/"
-  auth_url: "https://$host/cauth/auth"
-  auth_response_headers: "x-auth-request-user, x-auth-request-email" # , x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
-
-certmgr:
-  cluster_issuer: "acmedns-issuer"
-  issuer: ""
-
-rbac:
-  enabled: true
-
-smtp:
-  # Specify host/port to use standalone SMTP
-  host: 
-  port: 
-  # Specify user/pass to use Gmail SMTP
-  gmail_user: 
-  gmail_pass: 
-
-# Insert your tls certificate and private key here
-# NOTE: To generate a new certificate, you can run the helper script included with this chart:
-#    ./generate-self-signed-cert.sh [DOMAIN]
-#
-# If you do not specify a domain, you will be prompted for one
-tls:
-  enabled: true
-  secretName: "ndslabs-tls"
+config:
+  frontend:
+    live_reload: false
+    support_email: ""
+    analytics_tracking_id: ""
+    signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
+    signout_url: "https://kubernetes.docker.internal/oauth2/sign_out?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
+    customization:
+      org_name: "NCSA"
+      product_name: "Workbench"
+      landing_html: "<p>Labs Workbench is an environment where developers can prototype tools and capabilities</p><p>that help build out the NDS framework and services. In particular, it is a place that can</p><p>host the development activities of <a style='text-decoration:none;' href='http://www.nationaldataservice.org/projects/pilots.html'>NDS pilot projects</a></p>"
+      favicon_path: "/favicon.svg"
+      brand_logo_path: "/favicon.svg"
+      learn_more_url: "http://www.nationaldataservice.org/platform/workbench.html"
+      landing_header_1: "Find the tools you need"
+      landing_section_1: "Search our catalog of web-based research and software tools. We offer over 30 different software tools that fit many common scenarios encountered in research software development.  Find a set of tools to help you build out a new software product or extend an existing one."
+      landing_header_2: "Run the tools on our cloud service"
+      landing_section_2: "Once you've narrowed down your choices, launch your desired tool set on our cloud resources. Access your running applications using our web interface, and start integrating the tools and shaping your software product."
     
-resources: {}
+      help_links:
+        - icon: "fa-info-circle"
+          name: "Feature Overview"
+          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Feature+Overview"
+        - icon: "fa-question-circle"
+          name: "FAQ"
+          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Frequently+Asked+Questions"
+        - icon: "fa-book"
+          name: "User's Guide"
+          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/User%27s+Guide"
+        - icon: "fa-code-fork"
+          name: "Developer's Guide"
+          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Developer%27s+Guide"
+        - icon: "fa-gavel"
+          name: "Acceptable Use Policy"
+          url: "https://nationaldataservice.atlassian.net/wiki/display/NDSC/Acceptable+Use+Policy"
+  
+  backend:
+    oauth:
+      userinfoUrl: https://kubernetes.docker.internal/oauth2/userinfo
+
+    # Point at internal mongodb
+    mongo:
+      uri: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
+      db: ndslabs
+
+    # Point at internal Keycloak instance + imported realm
+    keycloak:
+      hostname: "https://kubernetes.docker.internal/auth"
+      realmName: "changeme"
+      clientId: "changeme"
+      clientSecret: ""
+
+    # Define our own domain and config params
+    domain: "kubernetes.docker.internal"
+    insecure_ssl_verify: "false"   # for production, use true
+    swagger_url: openapi/swagger-v1.yml
+    namespace: "workbench"
+
+
+    # Define parameters about the created userapp
+    userapps:
+      singlepod: false
+      service_account_name: workbench
+      home_storage:
+        enabled: true
+        claim_suffix: "home-data"
+      shared_storage:
+        enabled: false
+        read_only: false
+        mount_path: "/shared"
+        claim_name: "workbench-shared-storage"
+      ingress:
+        enabled: true   # TODO: currently ignored
+        tls:
+          hosts:
+           - kubernetes.docker.internal
+           - '*.kubernetes.docker.internal'
+        annotations:
+          ingress.kubernetes.io/ssl-redirect: "true"
+          ingress.kubernetes.io/force-ssl-redirect: "true"
+          #ingress.kubernetes.io/signin-url: "https://$host/oauth2/start?rd=https%3A%2F%2F$host%2Fmy-apps"
+          #ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+          #ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
+  
+    # TODO: Legacy config options (currently ignored)
+    timeout: 30
+    inactivity_timeout: 480
+
+### Optional dependency subcharts
+
+# Enable this to run an NGINX ingress controller (if you aren't running another ingress controller)
+ingress-nginx:
+  enabled: false
+  controller:
+    # If you have an existing TLS secret, you can uncomment this to specify it here
+    # Otherwise NGINX will generate a self-signed and use that instead
+    #extraArgs:
+    #  default-ssl-certificate: workbench/ndslabs-tls
+    hostPort:
+      enabled: true
+    kind: Deployment
+
+
+# Enable this to use an external NFS server to provision user volumes (e.g. nfs-condo)
+nfs-client-provisioner:
+  enabled: false   # WARNING: experimental
+  nfs:
+    server: "workbench-nfs-server-provisioner.workbench.svc.cluster.local"
+    path: "/export"
+    mountOptions:
+    - tcp
+    - nfsvers=3
+
+    
+# Enable this to run a local NFS server (development only)      
+nfs-server-provisioner:
+  enabled: true
+  persistence:
+    enabled: true
+    storageClass: "hostpath"
+
+
+# Enable this to run a local Keycloak instance (development only)
+keycloak:
+  enabled: false
+  httpRelativePath: "/auth/"
+  auth:
+    adminUser: "admin"
+    adminPassword: "workbench"
+  proxyAddressForwarding: true
+  # To automatically import a Keycloak realm for development, uncomment this and create a new configmap:
+  #   kubectl create configmap keycloak-realm -n workbench --from-file=realm.json
+  extraEnvVars:
+    - name: KEYCLOAK_EXTRA_ARGS
+      value: "-Dkeycloak.import=/config/realm.json"
+  extraVolumeMounts:
+    - name: config
+      mountPath: "/config"
+      readOnly: true
+  extraVolumes:
+    - name: config
+      configMap:
+        name: keycloak-realm
+        items:
+        - key: "realm.json"
+          path: "realm.json"
+  global:
+    storageClass: "hostpath"
+    postgresql:
+      auth:
+        postgresPassword: workbench
+        password: workbench
+  postgresql:
+    enabled: true
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: true
+    hostname: "kubernetes.docker.internal"
+    tls: true
+    path: /auth/
+    annotations:
+      # without this, signups (and other large proxy bodies) will fail with a 502
+      ingress.kubernetes.io/proxy-buffer-size: "128k"
+    extraTls:
+      - hosts:
+        - kubernetes.docker.internal
+
+
+oauth2-proxy:
+  initContainers: []
+  extraArgs:
+    # Github OIDC config:
+    - --provider=github  # "oidc" works as well, but this gives us roles too
+    - --client-id=changeme
+    - --client-secret=changeme
+
+    # Authorization config:
+    - --email-domain=*
+    - --whitelist-domain=.docker.internal     # needed to use the "rd" query string parameter
+    - --cookie-domain=.docker.internal        # forward your cookie automatically to subdomains
+    - --scope=email profile openid
+
+    # Local development only
+    - --insecure-oidc-allow-unverified-email=true
+  ingress:
+    enabled: true
+    path: /oauth2/
+    pathtype: Prefix
+    hostname: kubernetes.docker.internal
+    tls:
+      - hosts:
+          - kubernetes.docker.internal
+  
+
+mongodb:
+  enabled: true
+  autoimport:
+    enabled: true
+    annotations:
+      "helm.sh/hook": post-install
+      "helm.sh/hook-delete-policy": before-hook-creation
+    env:
+      - name: MONGO_URI
+        value: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
+      - name: MONGO_DB
+        value: "ndslabs"
+      - name: GIT_REPO
+        value: "https://github.com/nds-org/ndslabs-specs"
+      - name: GIT_BRANCH
+        value: "main"
+  architecture: standalone   # WARNING: experimental
+  #replicaCount: 3
+  auth:
+    rootUser: workbench
+    rootPassword: changeme
+
+  # TODO: Test AWS + GKE PVs
+  persistent:
+    # Values can be "false" for no persistent storage, "aws" for awsElasticBlockStore,
+    # or "gce" for gcePersistentDisk
+    type: false
+    # If using awsElasticBlockStore enter the EBS volume id, if using gcePersistentDisk
+    # enter the persistent disk name
+    volume_id:
+
+  persistence:
+    resourcePolicy: keep
+  storage_class: "hostpath"
+  access_mode: "ReadWriteOnce"   # default: ReadWriteOnce
+  size: "1Gi"
+
+
+resources:
+  webui: {}
+  api: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -226,3 +304,5 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+
