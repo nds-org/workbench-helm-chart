@@ -45,6 +45,8 @@ These options affect the Deployment resource created by this chart.
 | `controller.kind` | string | Kind to use for application manifest | `Deployment` |
 | `controller.images.webui` | string | Image to use for `webui` container | `ndslabs/webui:react` |
 | `controller.images.apiserver` | string | Image to use for `apiserver` container | `ndslabs/webui:react` |
+| `controller.serviceAccount.name` | string | (optional) Specify the `serviceAccountName` for this controller | `<release-name>` |
+| `controller.serviceAccount.create` | bool | If true, create a ServiceAccount for this release | `true` |
 | `controller.extraInitContainers` | array[map] | Specify `initContainers` for main application | `[]` |
 | `controller.extraLabels` | map | Extra labels to apply to the controller/service | `{}` |
 | `controller.extraEnv.webui` | array[map] | Additional `env` to set for `webui` container | `[]` |
@@ -59,6 +61,7 @@ These options affect the Ingress resources created by this chart.
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
 | `ingress.class` | string | Class name for Ingress resources | `""` |
+| `ingress.host` | string | Host name to use for Ingress resources | `""` |
 | `ingress.tls` | array[map] | TLS config to set for Ingress resources | `[]` |
 | `ingress.tls.hosts` | array[string] | Host names to set for TLS on Ingress resource | `[]` |
 | `ingress.api.annotations` | map | Annotations to set for `api` Ingress resources | `{}` |
@@ -205,7 +208,7 @@ If you already have a volume provisioner running that supports ReadWriteMany, yo
 
 NOTE: You should only need the client OR the server, but you do not need both running.
 
-#### NFS Client Provisioner: use an existing NFS server to provision RWM volumes
+#### (Experimental) NFS Client Provisioner: use an existing NFS server to provision RWM volumes
 
 To run a local [NFS Client Provisioner](https://artifacthub.io/packages/helm/supertetelman/nfs-client-provisioner) alongside Workbench, you can set `nfs-client-provisioner.enabled` to `true` in the `values.yaml`:
 ```yaml
