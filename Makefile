@@ -163,7 +163,7 @@ compile: check_yarn
 	(cd src/webui/ && yarn install && yarn build)
 
 build: check_docker clone
-	docker build -t $(WEBUI_IMAGE)-dev -f src/webui/Dockerfile.dev src/webui/
+	docker build -t $(WEBUI_IMAGE)-live -f src/webui/Dockerfile.dev src/webui/
 	docker build -t $(APISERVER_IMAGE) src/apiserver/
 	docker build -t $(WEBUI_IMAGE) src/webui/
 

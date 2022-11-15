@@ -12,6 +12,9 @@ controller:
   strategy_type: "RollingUpdate"  # default: RollingUpdate
   serviceAccount:
     create: false
+  images:
+    webui: "ndslabs/webui:develop"
+    apiserver: "ndslabs/apiserver:develop"
 
 ingress:
   class: "nginx"
@@ -61,22 +64,23 @@ config:
         enabled: false
       ingress:
         annotations:
-          ingress.kubernetes.io/auth-type: forward
-          ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
-          ingress.kubernetes.io/signin-url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
+          ingress.kubernetes.io/ssl-redirect: "true"
+          ingress.kubernetes.io/force-ssl-redirect: "true"
+
+          # Auth annotations for Traefik
+          #ingress.kubernetes.io/auth-type: forward
+          #ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
+          #ingress.kubernetes.io/signin-url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
+
+          # Auth annotations for NGINX
           nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
           nginx.ingress.kubernetes.io/signin-url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
+          nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
         class: nginx
         tls:
           hosts:
            - kubernetes.docker.internal
            - '*.kubernetes.docker.internal'
-        annotations:
-          ingress.kubernetes.io/ssl-redirect: "true"
-          ingress.kubernetes.io/force-ssl-redirect: "true"
-          nginx.ingress.kubernetes.io/signin-url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
-          nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
-          nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
   
     # TODO: Legacy config options (currently ignored)
     timeout: 30
