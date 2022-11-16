@@ -38,8 +38,7 @@ define HELP_BODY
           - `make dep` to pull Helm dependency subcharts
           - `make template` to perform a dry-run of Helm chart generation (for debugging)
           - `make` or `make install` to perform Helm install and/or upgrade with default values (optionally includes `make realm_import_secret`, enabled by default)
-          - `make local` to use localdev values (optionally includes `make realm_import_secret`, enabled by default)
-          - `make dev` to use localdev values and live reload enabled (optionally includes `make realm_import_secret`, enabled by default)
+          - `make local` or `make dev` to use localdev values (optionally includes `make realm_import_secret`, enabled by default)
           - `make status` or `make watch` to check status or watch for changes to Pods
           - `make describe` to check Pod events for startup errors
           - `make target=api logs` or `make target=proxy logs` to check Pod logs for runtime errors
@@ -127,15 +126,13 @@ install: check_required
 	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.realmimport.yaml; fi
 
 # Install using defaults + values.localdev.yaml
-local: check_required clone
+local: check_required clone compile
 	if [ ! -d "charts/" ]; then make dep; fi
 	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml; fi
 	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml -f values.realmimport.yaml; fi
 
-# Install using defaults + localdev + values.localdev.livereload.yaml
-dev: check_required dep clone compile
-	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml; fi
-	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml -f values.realmimport.yaml; fi
+# Alias for make local
+dev: local
 
 uninstall: check_helm 
 	helm uninstall --wait -n $(NAMESPACE) $(NAME)
@@ -163,12 +160,10 @@ compile: check_yarn
 	(cd src/webui/ && yarn install && yarn build)
 
 build: check_docker clone
-	docker build -t $(WEBUI_IMAGE)-live -f src/webui/Dockerfile.dev src/webui/
 	docker build -t $(APISERVER_IMAGE) src/apiserver/
 	docker build -t $(WEBUI_IMAGE) src/webui/
 
 push: build
-	docker push $(WEBUI_IMAGE)-live
 	docker push $(APISERVER_IMAGE)
 	docker push $(WEBUI_IMAGE)
 
