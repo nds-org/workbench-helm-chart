@@ -1,4 +1,4 @@
-name: Lint and Test Charts
+name: Smoke Test
 
 on: pull_request
 
@@ -43,19 +43,19 @@ jobs:
         run: |
           kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=primary --for condition=Ready --timeout=90s || kubectl describe pods -lapp.kubernetes.io/component=primary -n customnamespace && kubectl logs -lapp.kubernetes.io/component=primary -n customnamespace
           kubectl get pods -n customnamespace
-          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=keycloak --for condition=Ready --timeout=90s || kubectl describe pods -lapp.kubernetes.io/component=keycloak -n customnamespace && kubectl logs -lapp.kubernetes.io/component=keycloak -n customnamespace
+          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=keycloak --for condition=Ready --timeout=300s || kubectl describe pods -lapp.kubernetes.io/component=keycloak -n customnamespace && kubectl logs -lapp.kubernetes.io/component=keycloak -n customnamespace
           kubectl get pods -n customnamespace
 
       - name: Wait for Redis + OAuth2 Proxy to start
         run: |
           kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=master --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=master -n customnamespace && kubectl logs -lapp.kubernetes.io/component=master -n customnamespace
           kubectl get pods -n customnamespace
-          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=oauth2-proxy -n customnamespace && kubectl logs -lapp.kubernetes.io/component=oauth2-proxy -n customnamespace
+          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=oauth2-proxy -n customnamespace && kubectl logs -lapp.kubernetes.io/component=oauth2-proxy -n customnamespace -c wait-for-keycloak && kubectl logs -lapp.kubernetes.io/component=oauth2-proxy -n customnamespace
           kubectl get pods -n customnamespace
 
       - name: Wait for MongoDB + Workbench to start
         run: |
           kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=mongodb --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=mongodb -n customnamespace && kubectl logs -lapp.kubernetes.io/component=mongodb -n customnamespace
           kubectl get pods -n customnamespace
-          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=customreleasename --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=customreleasename -n customnamespace && kubectl logs -lapp.kubernetes.io/component=customreleasename-n customnamespace
+          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=customreleasename --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=customreleasename -n customnamespace && kubectl logs -lapp.kubernetes.io/component=customreleasename -n customnamespace -c wait-for-keycloak && kubectl logs -lapp.kubernetes.io/component=customreleasename-n customnamespace
           kubectl get pods -n customnamespace
