@@ -24,6 +24,12 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1.4.0
 
+      - name: Install ip utils
+        run: |
+          apt-get update
+          apt-get install -y iproute2
+          ip route get 1.2.3.4 | awk '{print $7}'
+
       - name: Create namespace + imported Keycloak realm (workbench-dev)
         run: |
           kubectl create namespace workbench
@@ -32,7 +38,8 @@ jobs:
       - name: Run helm install (localdev)
         run: |
           helm dep up
-          helm upgrade --install -n workbench workbench . -f values.localdev.yaml -f values.realmimport.yaml --set nfs-server-provisioner.persistence.storageClass=standard --set mongodb.global.storageClass=standard --set oauth2-proxy.global.storageClass=standard --set keycloak.global.storageClass=standard
+          helm upgrade --install -n workbench workbench . -f values.localdev.yaml -f values.realmimport.yaml --set nfs-server-provisioner.persistence.storageClass=standard --set mongodb.global.storageClass=standard --set oauth2-proxy.global.storageClass=standard --set keycloak.global.storageClass=standard --set controller.hostAliases[0].ip=$(ip route get 1.2.3.4 | awk '{print $7}') --set controller.hostAliases[0].hostnames[0]=kubernetes.docker.internal --set oauth2-proxy.hostAliases[0].ip=$(ip route get 1.2.3.4 | awk '{print $7}') --set oauth2-proxy.hostAliases[0].hostnames[0]=kubernetes.docker.internal
+
 
       - name: Wait for NFS Server to start
         run: |
