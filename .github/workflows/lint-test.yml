@@ -40,4 +40,4 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install --config values.localdev.yaml --chart-dirs . --charts .
+        run: ct install --config values.localdev.yaml --chart-dirs . --charts . --chart-repos oauth2-proxy=https://charts.bitnami.com/bitnami ingress-nginx=https://kubernetes.github.io/ingress-nginx nfs-client-provisioner=https://supertetelman.github.io/charts/ nfs-server-provisioner=https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner/ mongodb=https://charts.bitnami.com/bitnami keycloak=https://charts.bitnami.com/bitnami
