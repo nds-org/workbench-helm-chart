@@ -16,35 +16,6 @@ jobs:
         with:
           version: v3.10.0
 
-      #- name: Add dependency helm repos 
-      #  run: |
-      #    helm repo add oauth2-proxy https://charts.bitnami.com/bitnami
-      #    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-      #    helm repo add nfs-client-provisioner https://supertetelman.github.io/charts
-      #    helm repo add nfs-server-provisioner https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner
-      #    helm repo add mongodb https://charts.bitnami.com/bitnami
-      #    helm repo add keycloak https://charts.bitnami.com/bitnami
-      #    helm repo update
-
-      #- uses: actions/setup-python@v4
-      #  with:
-      #    python-version: '3.9'
-      #    check-latest: true
-
-      #- name: Set up chart-testing
-      #  uses: helm/chart-testing-action@v2.3.1
-
-      #- name: Run chart-testing (list-changed)
-      #  id: list-changed
-      #  run: |
-      #    changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
-      #    if [[ -n "$changed" ]]; then
-      #      echo "::set-output name=changed::true"
-      #    fi
-
-      #- name: Run chart-testing (lint)
-      #  run: ct lint --target-branch ${{ github.event.repository.default_branch }}
-
       - name: Run helm lint
         run: |
           helm version
@@ -58,28 +29,33 @@ jobs:
           kubectl create namespace customnamespace
           kubectl create configmap keycloak-realm -n customnamespace --from-file=realm.json
 
-      - name: Fetch dependency helm charts
-        run: |
-          helm dep up
-
       - name: Run helm install (localdev)
         run: |
+          helm dep up
           helm upgrade --install -n customnamespace customreleasename . -f values.localdev.yaml -f values.realmimport.yaml --set nfs-server-provisioner.persistence.storageClass=standard --set mongodb.global.storageClass=standard --set oauth2-proxy.global.storageClass=standard
 
       - name: Wait for NFS Server to start
-        run: kubectl wait pods -n customnamespace -lapp=nfs-server-provisioner --for condition=Ready --timeout=90s
+        run: |
+          kubectl wait pods -n customnamespace -lapp=nfs-server-provisioner --for condition=Ready --timeout=90s || kubectl describe pod -lapp=nfs-server-provisioner -n customnamespace && kubectl logs -lapp=nfs-server-provisioner -n customnamespace && exit 1
+          kubectl get pods -n customnamespace
 
       - name: Wait for Postgres + Keycloak to start
         run: |
-          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=primary --for condition=Ready --timeout=90s
-          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=keycloak --for condition=Ready --timeout=90s
+          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=primary --for condition=Ready --timeout=90s || kubectl describe pods -lapp.kubernetes.io/component=primary -n customnamespace && kubectl logs -lapp.kubernetes.io/component=primary -n customnamespace && exit 1
+          kubectl get pods -n customnamespace
+          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=keycloak --for condition=Ready --timeout=90s || kubectl describe pods -lapp.kubernetes.io/component=keycloak -n customnamespace && kubectl logs -lapp.kubernetes.io/component=keycloak -n customnamespace && exit 1
+          kubectl get pods -n customnamespace
 
       - name: Wait for Redis + OAuth2 Proxy to start
         run: |
-          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=master --for condition=Ready --timeout=90s
-          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout=90s
+          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=master --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=master -n customnamespace && kubectl logs -lapp.kubernetes.io/component=master -n customnamespace && exit 1
+          kubectl get pods -n customnamespace
+          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=oauth2-proxy -n customnamespace && kubectl logs -lapp.kubernetes.io/component=oauth2-proxy -n customnamespace && exit 1
+          kubectl get pods -n customnamespace
 
       - name: Wait for MongoDB + Workbench to start
         run: |
-          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=mongodb --for condition=Ready --timeout=90s
-          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=customreleasename --for condition=Ready --timeout=90s
+          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=mongodb --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=mongodb -n customnamespace && kubectl logs -lapp.kubernetes.io/component=mongodb -n customnamespace && exit 1
+          kubectl get pods -n customnamespace
+          kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=customreleasename --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=customreleasename -n customnamespace && kubectl logs -lapp.kubernetes.io/component=customreleasename-n customnamespace && exit 1
+          kubectl get pods -n customnamespace
