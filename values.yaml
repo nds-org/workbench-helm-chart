@@ -54,6 +54,7 @@ ingress:
 
 config:
   frontend:
+    live_reload: false
     support_email: ""
     analytics_tracking_id: ""
     signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"

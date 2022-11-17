@@ -87,17 +87,24 @@ spec:
 {{ toYaml . | indent 10 }}
 {{- end }}
         ports:
+{{- if .Values.config.frontend.live_reload }}
+        - containerPort: 3000
+          name: webui
+{{- else }}
         - containerPort: 80
           name: webui
+{{- end }}
         volumeMounts:
-        - name: frontend-config
-          mountPath: /usr/share/nginx/html/frontend.json
-          subPath: frontend.json
 {{- with .Values.controller.extraVolumeMounts.webui }}
 {{ toYaml . | indent 8 }}
 {{- end }}
-{{- with .Values.resources.webui }}
+{{- if not .Values.config.frontend.live_reload }}
+        - name: frontend-config
+          mountPath: /usr/share/nginx/html/frontend.json
+          subPath: frontend.json
+{{- end }}
         resources:
+{{- with .Values.resources.webui }}
 {{ toYaml . | indent 10 }}
 {{- end }}
 

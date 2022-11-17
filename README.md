@@ -74,6 +74,7 @@ These options affect the internals of Workbench and the customization of the Web
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
 | `config.frontend.domain` | string | Domain name (used by backend for self-reference) | `https://changeme.ndslabs.org` |
+| `config.frontend.live_reload` | bool | If true, change to use dev image ports (instead of port 80) when running dev image | `false` |
 | `config.frontend.signin_url` | string | URL to route frontend requests to "Log In"  | `https://changeme.ndslabs.org/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps` |
 | `config.frontend.signout_url` | string | URL to route frontend requests to "Log Out"  | `https://changeme.ndslabs.org/oauth2/sign_out?rd=https%3A%2F%2Fkubernetes.docker.internal%2F` |
 | `config.frontend.customization.product_name` | string | Human-friendly name to use for this product in the navbar | `Workbench` |
@@ -503,8 +504,8 @@ NOTE: if you're using cert-manager, backup any necessary secrets to avoid being 
 
 ## TODO
 * ~~`wait-for` startup ordering for `keycloak` <- `oauth2-proxy` + `apiserver` (OIDC discovery)~~
-* ~~Verbose configuration documentation~~
-* ~~Adjust webui to speak `_oauth2_proxy` instead of / addition in speaking `keycloak` for OIDC~~
 * source chart somewhere.. NCSA Harbor? github pages?
+* Verbose configuration documentation
+* Adjust webui to speak `_oauth2_proxy` instead of / addition in speaking `keycloak` for OIDC
 * MongoDB replication
 * Git release workflows? CI? Github Actions?
