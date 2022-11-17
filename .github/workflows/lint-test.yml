@@ -66,5 +66,23 @@ jobs:
         run: |
           helm upgrade --install -n customnamespace customreleasename . -f values.localdev.yaml -f values.realmimport.yaml
 
-      - name: Check status
-        run: kubectl get pods -n customnamespace
+      - name: Check for available StorageClasses
+        run: kubectl get sc
+
+      - name: Check pod labels
+        run: kubectl get pods -n customnamespace --show-labels
+
+      - name: Wait for NFS Server to start
+        run: kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=nfs-server-provisioner --for condition=Ready --timeout=90s
+
+      - name: Wait for Postgres + Keycloak to start
+        run: kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=primary --for condition=Ready --timeout=90s
+        run: kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=keycloak --for condition=Ready --timeout=90s
+
+      - name: Wait for Redis + OAuth2 Proxy to start
+        run: kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=master --for condition=Ready --timeout=90s
+        run: kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout=90s
+
+      - name: Wait for MongoDB + Workbench to start
+        run: kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=mongodb --for condition=Ready --timeout=90s
+        run: kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=customreleasename --for condition=Ready --timeout=90s
