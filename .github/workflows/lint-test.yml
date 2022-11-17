@@ -16,14 +16,6 @@ jobs:
         with:
           version: v3.10.0
 
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-          check-latest: true
-
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.3.1
-
       - name: Run chart-testing (list-changed)
         id: list-changed
         run: |
@@ -40,4 +32,4 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install --config values.localdev.yaml --chart-dirs . --charts . --chart-repos oauth2-proxy=https://charts.bitnami.com/bitnami ingress-nginx=https://kubernetes.github.io/ingress-nginx nfs-client-provisioner=https://supertetelman.github.io/charts/ nfs-server-provisioner=https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner/ mongodb=https://charts.bitnami.com/bitnami keycloak=https://charts.bitnami.com/bitnami
+        run: ct install --config values.localdev.yaml --chart-dirs . --charts . --chart-repos oauth2-proxy=https://charts.bitnami.com/bitnami ingress-nginx=https://kubernetes.github.io nfs-client-provisioner=https://supertetelman.github.io/charts nfs-server-provisioner=https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner mongodb=https://charts.bitnami.com/bitnami keycloak=https://charts.bitnami.com/bitnami
