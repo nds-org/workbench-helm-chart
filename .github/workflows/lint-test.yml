@@ -64,13 +64,7 @@ jobs:
 
       - name: Run helm install (localdev)
         run: |
-          helm upgrade --install -n customnamespace customreleasename . -f values.localdev.yaml -f values.realmimport.yaml
-
-      - name: Check for available StorageClasses
-        run: kubectl get sc
-
-      - name: Check pod labels
-        run: kubectl get pods -n customnamespace --show-labels
+          helm upgrade --install -n customnamespace customreleasename . -f values.localdev.yaml -f values.realmimport.yaml --set nfs-server-provisioner.persistence.storageClass=standard --set mongodb.global.storageClass=standard --set oauth2-proxy.global.storageClass=standard
 
       - name: Wait for NFS Server to start
         run: kubectl wait pods -n customnamespace -lapp=nfs-server-provisioner --for condition=Ready --timeout=90s
