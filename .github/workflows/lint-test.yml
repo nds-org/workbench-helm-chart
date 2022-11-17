@@ -47,13 +47,24 @@ jobs:
 
       - name: Run helm lint
         run: |
+          helm version
           helm lint
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.4.0
 
+      - name: Create namespace + imported Keycloak realm (workbench-dev)
+        run: |
+          kubectl create namespace customnamespace
+          kubectl create configmap keycloak-realm -n customnamespace --from-file=realm.json
+
+      - name: Fetch dependency helm charts
+        run: |
+          helm dep up
+
       - name: Run helm install (localdev)
-        run: helm upgrade --install -n customnamespace customreleasename . -f values.localdev.yaml -f values.realmimport.yaml
+        run: |
+          helm upgrade --install -n customnamespace customreleasename . -f values.localdev.yaml -f values.realmimport.yaml
 
       - name: Check status
         run: kubectl get pods -n customnamespace
