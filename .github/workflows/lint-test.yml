@@ -73,7 +73,7 @@ jobs:
         run: kubectl get pods -n customnamespace --show-labels
 
       - name: Wait for NFS Server to start
-        run: kubectl wait pods -n customnamespace -lapp.kubernetes.io/component=nfs-server-provisioner --for condition=Ready --timeout=90s
+        run: kubectl wait pods -n customnamespace -lapp=nfs-server-provisioner --for condition=Ready --timeout=90s
 
       - name: Wait for Postgres + Keycloak to start
         run: |
