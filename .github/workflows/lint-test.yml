@@ -32,7 +32,7 @@ jobs:
       - name: Run helm install (localdev)
         run: |
           helm dep up
-          helm upgrade --install -n customnamespace customreleasename . -f values.localdev.yaml -f values.realmimport.yaml --set nfs-server-provisioner.persistence.storageClass=standard --set mongodb.global.storageClass=standard --set oauth2-proxy.global.storageClass=standard
+          helm upgrade --install -n customnamespace customreleasename . -f values.localdev.yaml -f values.realmimport.yaml --set nfs-server-provisioner.persistence.storageClass=standard --set mongodb.global.storageClass=standard --set oauth2-proxy.global.storageClass=standard --set keycloak.global.storageClass=standard
 
       - name: Wait for NFS Server to start
         run: |
