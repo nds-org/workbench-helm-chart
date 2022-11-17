@@ -43,8 +43,8 @@ These options affect the Deployment resource created by this chart.
 | Path | Type | Description | Default |
 | ---- | ---- | ----------- | ------- |
 | `controller.kind` | string | Kind to use for application manifest | `Deployment` |
-| `controller.images.webui` | string | Image to use for `webui` container | `ndslabs/webui:react` |
-| `controller.images.apiserver` | string | Image to use for `apiserver` container | `ndslabs/webui:react` |
+| `controller.images.webui` | string | Image to use for `webui` container | `ndslabs/webui:2.0.0` |
+| `controller.images.apiserver` | string | Image to use for `apiserver` container | `ndslabs/apiserver:2.0.0` |
 | `controller.serviceAccount.name` | string | (optional) Specify the `serviceAccountName` for this controller | `<release-name>` |
 | `controller.serviceAccount.create` | bool | If true, create a ServiceAccount for this release | `true` |
 | `controller.extraInitContainers` | array[map] | Specify `initContainers` for main application | `[]` |
