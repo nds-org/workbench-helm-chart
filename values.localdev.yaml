@@ -10,36 +10,6 @@ extraDeploy: []
 
 controller:
   strategy_type: "RollingUpdate"  # default: RollingUpdate
-
-  extraEnv:
-    # Enable DEBUG mode for Python API (auto-restart when source updates)
-    apiserver:
-    - name: DEBUG
-      value: "true"
-
-  extraVolumeMounts:
-    # Mount WebUI build output into running container - this requires an IDE or running `make compile`
-    webui:
-    - mountPath: /usr/share/nginx/html/
-      name: webuisrc
-
-    # Mount Python API source code into running container
-    apiserver:
-    - mountPath: /app/
-      name: apisrc
-
-  # Create volumes from the source code on the host machine
-  extraVolumes:
-    # Mount WebUI build output into running container - this requires an IDE or running `make compile`
-    - name: webuisrc
-      hostPath:
-        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/webui/build
-
-    # Mount Python API source code into running container
-    - name: apisrc
-      hostPath:
-        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/apiserver
-
   serviceAccount:
     create: false
   images:
@@ -58,6 +28,7 @@ ingress:
 
 config:
   frontend:
+    live_reload: false
     support_email: "support@ndslabs.org"
     domain: "https://kubernetes.docker.internal"
     analytics_tracking_id: ""
@@ -80,6 +51,8 @@ config:
     # Define our own domain and config params
     domain: "kubernetes.docker.internal"
     insecure_ssl_verify: "false"   # default: true
+    swagger_url: openapi/swagger-v1.yml
+    namespace: "workbench"
 
 
     # Define parameters about the created userapp
