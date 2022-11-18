@@ -1,6 +1,14 @@
 name: Smoke Test
 
-on: pull_request
+on: 
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+      - develop
 
 jobs:
   lint-test:
