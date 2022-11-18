@@ -27,13 +27,13 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1.4.0
 
-      - name: Create namespace + imported Keycloak realm (workbench-dev)
+      - name: Run helm template (localdev + ci)
         run: |
-          kubectl create namespace workbench
+          helm template -n workbench workbench . -f values.localdev.yaml -f values.ci.yaml --debug --dry-run
 
       - name: Run helm install (localdev + ci)
         run: |
-          helm upgrade --install -n workbench workbench . -f values.localdev.yaml -f values.ci.yaml --debug
+          helm upgrade --install -n workbench workbench . --create-namespace -f values.localdev.yaml -f values.ci.yaml --debug
 
       - name: Wait for NFS Server to start
         run: |
