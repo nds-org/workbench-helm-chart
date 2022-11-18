@@ -59,7 +59,7 @@ jobs:
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 10s
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout 10s
           sleep 2
-          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/auth
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/auth
 
       - name: "Test Connection - Ingress -> Workbench API"
         run: |
