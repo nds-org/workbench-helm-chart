@@ -56,7 +56,7 @@ jobs:
 
       - name: Test Workbench Connection
         run: |
-          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure -vvvv https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/auth
-          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure -vvvv https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/version
-          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure -vvvv https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/services
-          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure -vvvv https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/frontend.json
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/auth
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/version
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/services
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/frontend.json
