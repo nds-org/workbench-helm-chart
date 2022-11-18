@@ -54,9 +54,18 @@ jobs:
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=workbench -n workbench && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c wait-for-oauth2-proxy && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c webui && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c apiserver
           kubectl get pods -n workbench
 
-      - name: Test Workbench Connection
+      - name: Test Connection: Ingress -> OAuth2 Proxy
         run: |
           kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/auth
+
+      - name: Test Connection: Ingress -> Workbench API
+        run: |
           kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/version
+
+      - name: Test Connection: Workbench API -> MongoDB
+        run: |
           kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/services
+
+      - name: Test Connection: Ingress -> WebUI
+        run: |
           kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/frontend.json
