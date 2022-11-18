@@ -33,7 +33,7 @@ config:
     domain: "https://kubernetes.docker.internal"
     analytics_tracking_id: ""
     signin_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
-    signout_url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
+    signout_url: "https://kubernetes.docker.internal/oauth2/sign_out?rd=https%3A%2F%2Fkubernetes.docker.internal%2F"
   
   backend:
     # Point at internal mongodb
