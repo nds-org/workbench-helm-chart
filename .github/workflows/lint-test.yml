@@ -30,34 +30,26 @@ jobs:
       - name: Create namespace + imported Keycloak realm (workbench-dev)
         run: |
           kubectl create namespace workbench
-          kubectl create configmap keycloak-realm -n workbench --from-file=realm.json
 
       - name: Run helm install (localdev)
         run: |
-          helm upgrade --install -n workbench workbench . -f values.localdev.yaml -f values.realmimport.yaml -f values.ci.yaml
+          helm upgrade --install -n workbench workbench . -f values.localdev.yaml -f values.ci.yaml
 
       - name: Wait for NFS Server to start
         run: |
           kubectl wait pods -n workbench -lapp=nfs-server-provisioner --for condition=Ready --timeout=90s || kubectl describe pod -lapp=nfs-server-provisioner -n workbench && kubectl logs -lapp=nfs-server-provisioner -n workbench
           kubectl get pods -n workbench 
 
-      - name: Wait for Postgres + Keycloak to start
-        run: |
-          kubectl wait pods -n workbench -lapp.kubernetes.io/component=primary --for condition=Ready --timeout=90s || kubectl describe pods -lapp.kubernetes.io/component=primary -n workbench && kubectl logs -lapp.kubernetes.io/component=primary -n workbench
-          kubectl get pods -n workbench
-          kubectl wait pods -n workbench -lapp.kubernetes.io/component=keycloak --for condition=Ready --timeout=300s || kubectl describe pods -lapp.kubernetes.io/component=keycloak -n workbench && kubectl logs -lapp.kubernetes.io/component=keycloak -n workbench
-          kubectl get pods -n workbench
-
       - name: Wait for Redis + OAuth2 Proxy to start
         run: |
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=master --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=master -n workbench && kubectl logs -lapp.kubernetes.io/component=master -n workbench
           kubectl get pods -n workbench
-          kubectl wait pods -n workbench -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=oauth2-proxy -n workbench && kubectl logs -lapp.kubernetes.io/component=oauth2-proxy -n workbench -c wait-for-keycloak && kubectl logs -lapp.kubernetes.io/component=oauth2-proxy -n workbench
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=oauth2-proxy -n workbench && kubectl logs -lapp.kubernetes.io/component=oauth2-proxy -n workbench
           kubectl get pods -n workbench
 
       - name: Wait for MongoDB + Workbench to start
         run: |
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=mongodb --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=mongodb -n workbench && kubectl logs -lapp.kubernetes.io/component=mongodb -n workbench
           kubectl get pods -n workbench
-          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=workbench -n workbench && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c wait-for-keycloak && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=workbench -n workbench && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c wait-for-oauth2-proxy && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench
           kubectl get pods -n workbench

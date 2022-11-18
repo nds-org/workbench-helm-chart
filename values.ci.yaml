@@ -25,7 +25,7 @@ config:
   backend:
     # Point at internal Keycloak instance + imported realm
     keycloak:
-      hostname: "https://workbench-keycloak.workbench.svc.cluster.local/auth"
+      hostname: "https://keycloak.workbench.ndslabs.org/auth"
       realmName: "workbench-dev"
       clientId: "workbench-local"
       clientSecret: ""
@@ -82,45 +82,9 @@ nfs-server-provisioner:
     enabled: true
     storageClass: standard
 
-
 # Enable this to run a local Keycloak instance (development only)
 keycloak:
-  global:
-    storageClass: standard
-  enabled: true
-  httpRelativePath: "/auth/"
-  auth:
-    adminUser: "admin"
-    adminPassword: "workbench"
-  proxyAddressForwarding: true
-  # To automatically import a Keycloak realm for development, uncomment this and create a new configmap:
-  #   kubectl create configmap keycloak-realm -n workbench --from-file=realm.json
-  extraEnvVars:
-    - name: KEYCLOAK_EXTRA_ARGS
-      value: "-Dkeycloak.import=/config/realm.json"
-  extraVolumeMounts:
-    - name: config
-      mountPath: "/config"
-      readOnly: true
-  extraVolumes:
-    - name: config
-      configMap:
-        name: keycloak-realm
-        items:
-        - key: "realm.json"
-          path: "realm.json"
-  ingress:
-    className: nginx
-    tls: false 
-    annotations:
-      kubernetes.io/ingress.class: nginx
-
-      # without this, signups (and other large proxy bodies) will fail with a 502
-      nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
-    extraTls:
-      - hosts:
-        - workbench-keycloak.workbench.svc.cluster.local
-
+  enabled: false
 
 oauth2-proxy:
   global:
@@ -129,19 +93,13 @@ oauth2-proxy:
     create: false
     name: workbench
   # Need to define a custom role and binding to wait-for-keycloak
-  initContainers:
-    - name: wait-for-keycloak
-      image: ghcr.io/groundnuty/k8s-wait-for:v1.6
-      imagePullPolicy: Always
-      args:
-        - "pod"
-        - "-lapp.kubernetes.io/component=keycloak"
+  initContainers: []
   extraArgs:
     # Keycloak OIDC config:
     - --provider=keycloak-oidc  # "oidc" works as well, but this gives us roles too
     - --provider-display-name=Workbench Login
     - --redirect-url=https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/callback
-    - --oidc-issuer-url=https://workbench-keycloak.workbench.svc.cluster.local/auth/realms/workbench-dev
+    - --oidc-issuer-url=https://keycloak.workbench.ndslabs.org/auth/realms/workbench-dev
     - --client-id=workbench-local
 
     # Authorization config:
@@ -153,10 +111,10 @@ oauth2-proxy:
     #- --allowed-role=workbench-user
 
     # Local Development Only:
-    - --insecure-oidc-skip-issuer-verification=true
+    #- --insecure-oidc-skip-issuer-verification=true
     - --insecure-oidc-allow-unverified-email=true
-    - --ssl-insecure-skip-verify=true
-    - --ssl-upstream-insecure-skip-verify=true
+    #- --ssl-insecure-skip-verify=true
+    #- --ssl-upstream-insecure-skip-verify=true
     - --force-json-errors=true
   ingress:
     enabled: true
