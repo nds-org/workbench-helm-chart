@@ -20,7 +20,7 @@ config:
   frontend:
     domain: "https://workbench-ingress-nginx-controller.workbench.svc.cluster.local"
     signin_url: "https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/start?rd=https%3A%2F%2Fworkbench-ingress-nginx-controller.workbench.svc.cluster.local%2Fmy-apps"
-    signout_url: "https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/start?rd=https%3A%2F%2Fworkbench-ingress-nginx-controller.workbench.svc.cluster.local%2F"
+    signout_url: "https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/sign_out?rd=https%3A%2F%2Fworkbench-ingress-nginx-controller.workbench.svc.cluster.local%2F"
   
   backend:
     # Point at internal Keycloak instance + imported realm
