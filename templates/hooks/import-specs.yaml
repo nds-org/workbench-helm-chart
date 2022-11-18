@@ -3,13 +3,14 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: "{{ .Release.Name }}-import-specs"
+  name: "{{ .Release.Namespace }}"
   labels:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/name: {{ .Release.Name }}-specloader
     app.kubernetes.io/component: specloader
   annotations:
-{{ toYaml .Values.mongodb.autoimport.annotations | indent 4 }}
+    {{ toYaml .Values.mongodb.autoimport.annotations | nindent 4 }}
 spec:
   template:
     metadata:
@@ -21,7 +22,7 @@ spec:
     spec:
       {{- if .Values.nodeSelector }}
       nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
+        {{ toYaml .Values.nodeSelector | nindent 8 }}
       {{- end }}
       restartPolicy: OnFailure
       containers:
@@ -30,13 +31,4 @@ spec:
          imagePullPolicy: Always
          env:
             {{ toYaml .Values.mongodb.autoimport.env | nindent 12 }}
-
-      # TODO: Allow modifying the script by mounting at runtime?
-      #  volumeMounts:
-      #  - name: mongodb-setup
-      #    mountPath: "/app/loadspecs.py"
-      #volumes:
-      #- name: mongodb-setup
-      #  configMap:
-      #    name: {{ .Release.Name }}-specloader
 {{- end }}
