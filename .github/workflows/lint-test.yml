@@ -16,9 +16,12 @@ jobs:
         with:
           version: v3.10.0
 
+      - name: Fetch helm chart dependencies
+        run: |
+          helm dep up
+
       - name: Run helm lint
         run: |
-          helm version
           helm lint
 
       - name: Create kind cluster
@@ -31,9 +34,7 @@ jobs:
 
       - name: Run helm install (localdev)
         run: |
-          helm dep up
           helm upgrade --install -n workbench workbench . -f values.localdev.yaml -f values.realmimport.yaml -f values.ci.yaml
-
 
       - name: Wait for NFS Server to start
         run: |
