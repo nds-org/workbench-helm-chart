@@ -168,7 +168,7 @@ mongodb:
 
   persistence:
     resourcePolicy: keep
-  storage_class: "hostpath"
+  storage_class: "standard"
   access_mode: "ReadWriteOnce"   # default: ReadWriteOnce
   size: "1Gi"
 
