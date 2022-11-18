@@ -1,4 +1,4 @@
-name: Smoke Test
+name: Helm Lint
 
 on: 
   pull_request:
