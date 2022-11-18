@@ -56,16 +56,16 @@ jobs:
 
       - name: "Test Connection - Ingress -> OAuth2 Proxy"
         run: |
-          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/auth
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/auth
 
       - name: "Test Connection - Ingress -> Workbench API"
         run: |
-          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/version
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail-with-body --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/version
 
       - name: "Test Connection - Workbench API -> MongoDB"
         run: |
-          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/services
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail-with-body --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/services
 
       - name: "Test Connection - Ingress -> WebUI"
         run: |
-          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/frontend.json
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail-with-body --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/frontend.json
