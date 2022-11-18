@@ -33,7 +33,7 @@ jobs:
 
       - name: Run helm install (localdev + ci)
         run: |
-          helm upgrade --install -n workbench workbench . -f values.localdev.yaml -f values.ci.yaml
+          helm upgrade --install -n workbench workbench . -f values.localdev.yaml -f values.ci.yaml --debug
 
       - name: Wait for NFS Server to start
         run: |
