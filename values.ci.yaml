@@ -92,8 +92,13 @@ oauth2-proxy:
   serviceAccount:
     create: false
     name: workbench
-  # Need to define a custom role and binding to wait-for-keycloak
-  initContainers: []
+  initContainers:
+    - name: wait-for-redis
+      image: ghcr.io/groundnuty/k8s-wait-for:v1.6
+      imagePullPolicy: Always
+      args:
+        - "pod"
+        - "-lapp.kubernetes.io/component=master"
   extraArgs:
     # Keycloak OIDC config:
     - --provider=keycloak-oidc  # "oidc" works as well, but this gives us roles too
