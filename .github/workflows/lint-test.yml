@@ -24,12 +24,6 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1.4.0
 
-      - name: Install ip utils
-        run: |
-          apt-get update
-          apt-get install -y iproute2
-          ip route get 1.2.3.4 | awk '{print $7}'
-
       - name: Create namespace + imported Keycloak realm (workbench-dev)
         run: |
           kubectl create namespace workbench
