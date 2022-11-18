@@ -1,0 +1,212 @@
+# Default values for workbench.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+### Kubernetes deployment options
+
+
+
+ingress:
+  class: "nginx"
+  host: "workbench-ingress-nginx-controller.workbench.svc.cluster.local"
+  tls:
+    - hosts:
+      - "workbench-ingress-nginx-controller.workbench.svc.cluster.local"
+
+
+### Workbench config and cutomization
+
+config:
+  frontend:
+    domain: "https://workbench-ingress-nginx-controller.workbench.svc.cluster.local"
+    signin_url: "https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/start?rd=https%3A%2F%2Fworkbench-ingress-nginx-controller.workbench.svc.cluster.local%2Fmy-apps"
+    signout_url: "https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/start?rd=https%3A%2F%2Fworkbench-ingress-nginx-controller.workbench.svc.cluster.local%2F"
+  
+  backend:
+    # Point at internal Keycloak instance + imported realm
+    keycloak:
+      hostname: "https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/auth"
+      realmName: "workbench-dev"
+      clientId: "workbench-local"
+      clientSecret: ""
+
+    # Define our own domain and config params
+    domain: "workbench-ingress-nginx-controller.workbench.svc.cluster.local"
+    insecure_ssl_verify: "false"   # default: true
+
+
+    # Define parameters about the created userapp
+    userapps:
+      home_storage:
+        enabled: true
+        storage_class: nfs
+      shared_storage:
+        enabled: false
+      ingress:
+        annotations:
+          ingress.kubernetes.io/ssl-redirect: "true"
+          ingress.kubernetes.io/force-ssl-redirect: "true"
+
+          # Auth annotations for NGINX
+          nginx.ingress.kubernetes.io/auth-url: "https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/auth"
+          nginx.ingress.kubernetes.io/signin-url: "https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/start?rd=https%3A%2F%2Fworkbench-ingress-nginx-controller.workbench.svc.cluster.local%2Fmy-apps"
+          nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
+        class: nginx
+  
+    # TODO: Legacy config options (currently ignored)
+    timeout: 30
+    inactivity_timeout: 480
+
+### Optional dependency subcharts
+
+# Enable this to run an NGINX ingress controller (if you aren't running another ingress controller)
+ingress-nginx:
+  enabled: true
+  controller:
+    # If you have an existing TLS secret, you can uncomment this to specify it here
+    # Otherwise NGINX will generate a self-signed and use that instead
+    #extraArgs:
+    #  default-ssl-certificate: workbench/ndslabs-tls
+    hostPort:
+      enabled: false
+
+
+# Enable this to use an external NFS server to provision user volumes (e.g. nfs-condo)
+nfs-client-provisioner:
+  enabled: false   # WARNING: experimental
+    
+# Enable this to run a local NFS server (development only)      
+nfs-server-provisioner:
+  enabled: true
+  persistence:
+    enabled: true
+    storageClass: standard
+
+
+# Enable this to run a local Keycloak instance (development only)
+keycloak:
+  global:
+    storageClass: standard
+  enabled: true
+  httpRelativePath: "/auth/"
+  auth:
+    adminUser: "admin"
+    adminPassword: "workbench"
+  proxyAddressForwarding: true
+  # To automatically import a Keycloak realm for development, uncomment this and create a new configmap:
+  #   kubectl create configmap keycloak-realm -n workbench --from-file=realm.json
+  extraEnvVars:
+    - name: KEYCLOAK_EXTRA_ARGS
+      value: "-Dkeycloak.import=/config/realm.json"
+  extraVolumeMounts:
+    - name: config
+      mountPath: "/config"
+      readOnly: true
+  extraVolumes:
+    - name: config
+      configMap:
+        name: keycloak-realm
+        items:
+        - key: "realm.json"
+          path: "realm.json"
+  ingress:
+    className: nginx
+    tls: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
+
+      # without this, signups (and other large proxy bodies) will fail with a 502
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    extraTls:
+      - hosts:
+        - workbench-ingress-nginx-controller.workbench.svc.cluster.local
+
+
+oauth2-proxy:
+  global:
+    storageClass: standard
+  serviceAccount:
+    create: false
+    name: workbench
+  # Need to define a custom role and binding to wait-for-keycloak
+  initContainers:
+    - name: wait-for-keycloak
+      image: ghcr.io/groundnuty/k8s-wait-for:v1.6
+      imagePullPolicy: Always
+      args:
+        - "pod"
+        - "-lapp.kubernetes.io/component=keycloak"
+  extraArgs:
+    # Keycloak OIDC config:
+    - --provider=keycloak-oidc  # "oidc" works as well, but this gives us roles too
+    - --provider-display-name=Workbench Login
+    - --redirect-url=https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/callback
+    - --oidc-issuer-url=https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/auth/realms/workbench-dev
+    - --client-id=workbench-local
+
+    # Authorization config:
+    #- --email-domain=illinois.edu
+    - --whitelist-domain=.cluster.local     # needed to use the "rd" query string parameter
+    - --cookie-domain=.cluster.local        # forward your cookie automatically to subdomains
+    #- --cookie-samesite=lax
+    - --scope=email profile openid
+    #- --allowed-role=workbench-user
+
+    # Local Development Only:
+    - --insecure-oidc-skip-issuer-verification=true
+    - --insecure-oidc-allow-unverified-email=true
+    - --ssl-insecure-skip-verify=true
+    - --ssl-upstream-insecure-skip-verify=true
+    - --force-json-errors=true
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    path: /oauth2/
+    pathtype: Prefix
+    hostname: workbench-ingress-nginx-controller.workbench.svc.cluster.local
+    tls:
+      - hosts:
+          - workbench-ingress-nginx-controller.workbench.svc.cluster.local
+  
+
+mongodb:
+  global:
+    storageClass: standard
+  enabled: true
+  autoimport:
+    enabled: true
+    annotations:
+      "helm.sh/hook": post-upgrade
+      "helm.sh/hook-delete-policy": before-hook-creation
+    env:
+      - name: FORCE
+        value: "true"
+      - name: MONGO_URI
+        value: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
+      - name: GIT_REPO
+        value: "https://github.com/nds-org/ndslabs-specs"
+      - name: GIT_BRANCH
+        value: "develop"
+  architecture: standalone   # WARNING: experimental
+  #replicaCount: 3
+  auth:
+    replicaSetKey: changeme
+    rootUser: workbench
+    rootPassword: workbench
+
+  # TODO: Test AWS + GKE PVs
+  persistent:
+    # Values can be "false" for no persistent storage, "aws" for awsElasticBlockStore,
+    # or "gce" for gcePersistentDisk
+    type: false
+    # If using awsElasticBlockStore enter the EBS volume id, if using gcePersistentDisk
+    # enter the persistent disk name
+    volume_id:
+
+  persistence:
+    resourcePolicy: keep
+  storage_class: "hostpath"
+  access_mode: "ReadWriteOnce"   # default: ReadWriteOnce
+  size: "1Gi"
+
+
