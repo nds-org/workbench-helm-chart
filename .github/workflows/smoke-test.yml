@@ -65,8 +65,53 @@ jobs:
           make compile
           helm upgrade --debug --install workbench -n workbench . --create-namespace -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml --set workingDirectory="${PWD}"
 
-      - name: Wait for Workbench Startup
-        uses: nds-org/workbench-helm-chart/.github/workflows/wait-for-start.yml@autobuild-webui-livereload-image
+      - name: Wait for NFS Server to start
+        run: |
+          kubectl wait pods -n workbench -lapp=nfs-server-provisioner --for condition=Ready --timeout=90s || kubectl describe pod -lapp=nfs-server-provisioner -n workbench && kubectl logs -lapp=nfs-server-provisioner -n workbench
+          kubectl get pods -n workbench
+
+      - name: Wait for Redis + OAuth2 Proxy to start
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=master --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=master -n workbench && kubectl logs -lapp.kubernetes.io/component=master -n workbench
+          kubectl get pods -n workbench
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=oauth2-proxy -n workbench && kubectl logs -lapp.kubernetes.io/component=oauth2-proxy -n workbench
+          kubectl get pods -n workbench
+
+      - name: Wait for MongoDB + Workbench to start
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=mongodb --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=mongodb -n workbench && kubectl logs -lapp.kubernetes.io/component=mongodb -n workbench
+          kubectl get pods -n workbench
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=workbench -n workbench && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c wait-for-oauth2-proxy && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c webui && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c apiserver
+          kubectl get pods -n workbench
+
+      - name: "Test Connection - Ingress -> OAuth2 Proxy"
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout 10s
+          sleep 2
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/auth
+
+      - name: "Test Connection - Ingress -> Workbench API"
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
+          sleep 2
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/version
+
+      - name: "Test Connection - Workbench API -> MongoDB"
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 15s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=mongodb --for condition=Ready --timeout 10s
+          sleep 2
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/services
+
+      - name: "Test Connection - Ingress -> WebUI"
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
+          sleep 2
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/frontend.json
 
       - name: Show Workbench status
         run: |
@@ -124,8 +169,53 @@ jobs:
         run: |
           helm upgrade --install -n workbench workbench . --create-namespace -f values.localdev.yaml -f values.ci.yaml --debug
 
-      - name: Wait for Workbench Startup
-        uses: nds-org/workbench-helm-chart/.github/workflows/wait-for-start.yml@autobuild-webui-livereload-image
+      - name: Wait for NFS Server to start
+        run: |
+          kubectl wait pods -n workbench -lapp=nfs-server-provisioner --for condition=Ready --timeout=90s || kubectl describe pod -lapp=nfs-server-provisioner -n workbench && kubectl logs -lapp=nfs-server-provisioner -n workbench
+          kubectl get pods -n workbench
+
+      - name: Wait for Redis + OAuth2 Proxy to start
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=master --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=master -n workbench && kubectl logs -lapp.kubernetes.io/component=master -n workbench
+          kubectl get pods -n workbench
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=oauth2-proxy -n workbench && kubectl logs -lapp.kubernetes.io/component=oauth2-proxy -n workbench
+          kubectl get pods -n workbench
+
+      - name: Wait for MongoDB + Workbench to start
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=mongodb --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=mongodb -n workbench && kubectl logs -lapp.kubernetes.io/component=mongodb -n workbench
+          kubectl get pods -n workbench
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=workbench -n workbench && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c wait-for-oauth2-proxy && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c webui && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c apiserver
+          kubectl get pods -n workbench
+
+      - name: "Test Connection - Ingress -> OAuth2 Proxy"
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout 10s
+          sleep 2
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/auth
+
+      - name: "Test Connection - Ingress -> Workbench API"
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
+          sleep 2
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/version
+
+      - name: "Test Connection - Workbench API -> MongoDB"
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 15s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=mongodb --for condition=Ready --timeout 10s
+          sleep 2
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/services
+
+      - name: "Test Connection - Ingress -> WebUI"
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
+          sleep 2
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/frontend.json
 
       - name: "Cleanup: Uninstall Helm release"
         if: ${{ always() }}
