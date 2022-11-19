@@ -14,7 +14,7 @@ config:
 controller:
   images:
     # use dev image (also enable config.frontend.live_reload)
-    webui: "ndslabs/webui:develop-live"
+    webui: "ndslabs/webui-livereload:develop"
 
   # Enable DEBUG mode for Python API (auto-restart when source updates)
   extraEnv:
