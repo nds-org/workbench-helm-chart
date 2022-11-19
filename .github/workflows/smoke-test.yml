@@ -47,7 +47,8 @@ jobs:
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.4.0
-        config: .kind.with.hostpath.yml
+        with:
+          config: .kind.with.hostpath.yml
 
       - name: Setup environment
         run: |
