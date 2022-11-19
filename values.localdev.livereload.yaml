@@ -1,12 +1,5 @@
 
 
-# Expose mongodb on port 30017 for local development (insecure!)
-mongodb:
-  service:
-    type: NodePort
-    nodePorts:
-      mongodb: 30017
-
 config:
   frontend:
     live_reload: true
