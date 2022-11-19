@@ -57,7 +57,7 @@ jobs:
           cat .env | sed -e 's/WHICH_ARGS=-s/WHICH_ARGS=/' -e 's/REALM_IMPORT=true/REALM_IMPORT=false/' -e "s/KUBE_CONTEXT=docker-desktop/KUBE_CONTEXT=$(kubectl config current-context)/" > .env
           cat .env
 
-      - name: Fetch Helm depedencies
+      - name: Run make dep
         run: |
           make dep
 
@@ -65,11 +65,11 @@ jobs:
         run: |
           helm template --debug --dry-run workbench -n workbench . -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml --set workingDirectory="${PWD}"
 
-      - name: Clone webui + apiserver source locally
+      - name: Run make clone
         run: |
           make clone
 
-      - name: Compile webui source
+      - name: Run make compile
         run: |
           make compile
 
@@ -125,19 +125,19 @@ jobs:
           sleep 2
           kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/frontend.json
 
-      - name: Show Workbench status
+      - name: Run make status
         run: |
           make status
 
-      - name: Describe Workbench Pod (view Pod events)
+      - name: Run make describe (for debugging)
         run: |
           make describe
 
-      - name: Rebuild Docker images
+      - name: Run make build
         run: |
           make build
 
-      - name: Restart Workbench Pod
+      - name: Run make restart
         run: |
           make restart
 
