@@ -59,7 +59,7 @@ jobs:
           make dep
           make clone
           make compile
-          helm upgrade --debug --install workbench -n workbench . --create-namespace -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml
+          helm upgrade --debug --install workbench -n workbench . --create-namespace -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml --set workingDirectory="${PWD}"
 
       - name: Output Helm chart templates (for debugging)
         run: |

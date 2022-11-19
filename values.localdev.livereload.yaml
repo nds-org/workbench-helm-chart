@@ -28,8 +28,8 @@ controller:
   extraVolumes:
     - name: webuisrc
       hostPath:
-        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/webui/         # for live_reload
+        path: {{ .Values.workingDirectory }}/src/webui/         # for live_reload
     - name: apisrc
       hostPath:
-        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/apiserver
+        path: {{ .Values.workingDirectory }}/src/apiserver
 

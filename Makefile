@@ -130,12 +130,12 @@ install: check_required
 local: check_required clone
 	if [ ! -d "charts/" ]; then make dep; fi
 	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml; fi
-	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml -f values.realmimport.yaml; fi
+	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml -f values.realmimport.yaml --set workingDirectory="${PWD}"; fi
 
 # Install using defaults + localdev + values.localdev.livereload.yaml
 dev: check_required dep clone compile
 	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml; fi
-	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml -f values.realmimport.yaml; fi
+	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml -f values.realmimport.yaml --set workingDirectory="${PWD}"; fi
 
 uninstall: check_helm 
 	helm uninstall --wait -n $(NAMESPACE) $(NAME)
