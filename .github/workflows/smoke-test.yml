@@ -61,7 +61,7 @@ jobs:
         run: |
           make dep
 
-      - name: Output Helm chart templates (for debugging)
+      - name: Simulate make template (for debugging)
         run: |
           helm template --debug --dry-run workbench -n workbench . -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml --set workingDirectory="${PWD}"
 
@@ -73,7 +73,7 @@ jobs:
         run: |
           make compile
 
-      - name: Clone repos, compile source, fetch deps, and install (localdev + ci + livereload)
+      - name: Simulate make dev (localdev + ci + livereload)
         run: |
           helm upgrade --debug --install workbench -n workbench . --create-namespace -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml --set workingDirectory="${PWD}"
 
