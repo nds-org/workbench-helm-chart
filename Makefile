@@ -208,8 +208,9 @@ restart: check_kubectl
 	kubectl delete pod -n $(NAMESPACE) -lapp.kubernetes.io/name=$(NAME)
      
 clean: check_kubectl
-	kubectl delete pvc -n $(NAMESPACE) --all
-	kubectl delete serviceaccount -n $(NAMESPACE) $(NAME)
+	make uninstall 2>&1; \
+	kubectl delete pvc -n $(NAMESPACE) --all; \
+	kubectl delete serviceaccount -n $(NAMESPACE) $(NAME) --ignore-not-found
 
 clean_all: check_helm check_kubectl
 	make uninstall 2>&1; \
