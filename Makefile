@@ -87,25 +87,25 @@ check_optional: check_git check_docker check_yarn
 	echo "$(SUCCESS) all optional dependencies are installed and ready."
 
 check_kubectl:
-	which -s kubectl || (echo '$(FAILED) Please install kubectl to use this Helm chart' && exit 1)
+	which $(WHICH_ARGS) kubectl || (echo '$(FAILED) Please install kubectl to use this Helm chart' && exit 1)
 	echo "$(SUCCESS) kubectl is installed and ready."
 	make check_context
 	echo "$(SUCCESS) kubectl is using context: $(KUBE_CONTEXT)"
 
 check_helm:
-	which -s helm || (echo '$(FAILED) Please install helm v3 to use this Helm chart' && exit 1)
+	which $(WHICH_ARGS) helm || (echo '$(FAILED) Please install helm v3 to use this Helm chart' && exit 1)
 	echo "$(SUCCESS) helm is installed and ready."
 	
 check_git:
-	which -s git || (echo '$(FAILED) Please install git to use "make clone/pull"' && exit 1)
+	which $(WHICH_ARGS) git || (echo '$(FAILED) Please install git to use "make clone/pull"' && exit 1)
 	echo "$(SUCCESS) git is installed and ready."
 
 check_docker:
-	which -s docker || (echo '$(FAILED) Please install docker to use "make build/push"' && exit 1)
+	which $(WHICH_ARGS) docker || (echo '$(FAILED) Please install docker to use "make build/push"' && exit 1)
 	echo "$(SUCCESS) docker is installed and ready."
 
 check_yarn:
-	which -s yarn || (echo '$(FAILED) Please install yarn to use "make rebuild"' && exit 1)
+	which $(WHICH_ARGS) yarn || (echo '$(FAILED) Please install yarn to use "make rebuild"' && exit 1)
 	echo "$(SUCCESS) yarn is installed and ready."
 
 check_context:
@@ -130,12 +130,12 @@ install: check_required
 local: check_required clone
 	if [ ! -d "charts/" ]; then make dep; fi
 	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml; fi
-	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml -f values.realmimport.yaml; fi
+	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install -n $(NAMESPACE) $(NAME) --create-namespace $(CHART_PATH) -f values.localdev.yaml -f values.realmimport.yaml --set workingDirectory="${PWD}"; fi
 
 # Install using defaults + localdev + values.localdev.livereload.yaml
 dev: check_required dep clone compile
 	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml; fi
-	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml -f values.realmimport.yaml; fi
+	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml -f values.realmimport.yaml --set workingDirectory="${PWD}"; fi
 
 uninstall: check_helm 
 	helm uninstall --wait -n $(NAMESPACE) $(NAME)
@@ -163,12 +163,12 @@ compile: check_yarn
 	(cd src/webui/ && yarn install && yarn build)
 
 build: check_docker clone
-	docker build -t $(WEBUI_IMAGE)-live -f src/webui/Dockerfile.dev src/webui/
+	docker build -t $(WEBUI_LIVERELOAD_IMAGE) -f src/webui/Dockerfile.dev src/webui/
 	docker build -t $(APISERVER_IMAGE) src/apiserver/
 	docker build -t $(WEBUI_IMAGE) src/webui/
 
 push: build
-	docker push $(WEBUI_IMAGE)-live
+	docker push $(WEBUI_LIVERELOAD_IMAGE)
 	docker push $(APISERVER_IMAGE)
 	docker push $(WEBUI_IMAGE)
 
@@ -208,8 +208,9 @@ restart: check_kubectl
 	kubectl delete pod -n $(NAMESPACE) -lapp.kubernetes.io/name=$(NAME)
      
 clean: check_kubectl
-	kubectl delete pvc -n $(NAMESPACE) --all
-	kubectl delete serviceaccount -n $(NAMESPACE) $(NAME)
+	make uninstall 2>&1; \
+	kubectl delete pvc -n $(NAMESPACE) --all; \
+	kubectl delete serviceaccount -n $(NAMESPACE) $(NAME) --ignore-not-found
 
 clean_all: check_helm check_kubectl
 	make uninstall 2>&1; \

@@ -1,11 +1,5 @@
 
-
-# Expose mongodb on port 30017 for local development (insecure!)
-mongodb:
-  service:
-    type: NodePort
-    nodePorts:
-      mongodb: 30017
+workingDirectory: ""
 
 config:
   frontend:
@@ -14,7 +8,7 @@ config:
 controller:
   images:
     # use dev image (also enable config.frontend.live_reload)
-    webui: "ndslabs/webui:develop-live"
+    webui: "ndslabs/webui-livereload:develop"
 
   # Enable DEBUG mode for Python API (auto-restart when source updates)
   extraEnv:
@@ -23,20 +17,20 @@ controller:
       value: "true"
 
   # Override frontend mountPath (default: /usr/share/nginx/html/)
-  extraVolumeMounts:
-    webui:
-    - mountPath: /app/                            # for live_reload
-      name: webuisrc
-    apiserver:
-    - mountPath: /app/
-      name: apisrc
+  #extraVolumeMounts:
+  #  webui:
+  #  - mountPath: /app/                            # for live_reload
+  #    name: webuisrc
+  #  apiserver:
+  #  - mountPath: /app/
+  #    name: apisrc
 
   # Create volumes from the source code on the host machine
-  extraVolumes:
-    - name: webuisrc
-      hostPath:
-        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/webui/         # for live_reload
-    - name: apisrc
-      hostPath:
-        path: /Users/lambert8/workspace/national-data-service/workbench-helm-chart/src/apiserver
+  #extraVolumes:
+  #  - name: webuisrc
+  #    hostPath:
+  #      path: "{{ .Values.workingDirectory }}/src/webui/"         # for live_reload
+  #  - name: apisrc
+  #    hostPath:
+  #      path: "{{ .Values.workingDirectory }}/src/apiserver/"
 

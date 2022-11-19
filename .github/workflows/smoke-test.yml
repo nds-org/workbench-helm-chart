@@ -1,6 +1,8 @@
 name: Smoke Test
 
 on: 
+  schedule:
+    - cron:  '0 0 6 * *'
   pull_request:
     branches:
       - main
@@ -32,7 +34,7 @@ jobs:
         run: |
           helm lint
 
-  smoke-test:
+  dev-workflow:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -45,25 +47,40 @@ jobs:
         with:
           version: v3.10.0
 
-      - name: Fetch helm chart dependencies
-        run: |
-          helm dep up
-
       - name: Create kind cluster
         uses: helm/kind-action@v1.4.0
+        with:
+          config: .kind.with.hostpath.yml
 
-      - name: Run helm template (localdev + ci)
+      - name: Setup environment
         run: |
-          helm template -n workbench workbench . -f values.localdev.yaml -f values.ci.yaml --debug --dry-run
+          cat .env | sed -e 's/WHICH_ARGS=-s/WHICH_ARGS=/' -e 's/REALM_IMPORT=true/REALM_IMPORT=false/' -e "s/KUBE_CONTEXT=docker-desktop/KUBE_CONTEXT=$(kubectl config current-context)/" > .env
+          cat .env
 
-      - name: Run helm install (localdev + ci)
+      - name: Run make dep
         run: |
-          helm upgrade --install -n workbench workbench . --create-namespace -f values.localdev.yaml -f values.ci.yaml --debug
+          make dep
+
+      - name: Simulate make template (for debugging)
+        run: |
+          helm template --debug --dry-run workbench -n workbench . -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml --set workingDirectory="${PWD}"
+
+      - name: Run make clone
+        run: |
+          make clone
+
+      - name: Run make compile
+        run: |
+          make compile
+
+      - name: Simulate make dev (localdev + ci + livereload)
+        run: |
+          helm upgrade --debug --install workbench -n workbench . --create-namespace -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml --set workingDirectory="${PWD}"
 
       - name: Wait for NFS Server to start
         run: |
           kubectl wait pods -n workbench -lapp=nfs-server-provisioner --for condition=Ready --timeout=90s || kubectl describe pod -lapp=nfs-server-provisioner -n workbench && kubectl logs -lapp=nfs-server-provisioner -n workbench
-          kubectl get pods -n workbench 
+          kubectl get pods -n workbench
 
       - name: Wait for Redis + OAuth2 Proxy to start
         run: |
@@ -107,3 +124,117 @@ jobs:
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
           sleep 2
           kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/frontend.json
+
+      - name: Run make status
+        run: |
+          make status
+
+      - name: Run make describe (for debugging)
+        run: |
+          make describe
+
+      - name: Run make build
+        run: |
+          make build
+
+      - name: Run make restart
+        run: |
+          make restart
+
+      - name: Run make uninstall
+        run: |
+          make uninstall
+
+      - name: Run make clean
+        run: |
+          make clean
+
+      - name: Run make clean_all
+        run: |
+          make clean_all
+
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.10.0
+
+      - name: Fetch helm chart dependencies
+        run: |
+          helm dep up
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.4.0
+
+      - name: Run helm template (localdev + ci)
+        run: |
+          helm template -n workbench workbench . -f values.localdev.yaml -f values.ci.yaml --debug --dry-run
+
+      - name: Run helm install (localdev + ci)
+        run: |
+          helm upgrade --install -n workbench workbench . --create-namespace -f values.localdev.yaml -f values.ci.yaml --debug
+
+      - name: Wait for NFS Server to start
+        run: |
+          kubectl wait pods -n workbench -lapp=nfs-server-provisioner --for condition=Ready --timeout=90s || kubectl describe pod -lapp=nfs-server-provisioner -n workbench && kubectl logs -lapp=nfs-server-provisioner -n workbench
+          kubectl get pods -n workbench
+
+      - name: Wait for Redis + OAuth2 Proxy to start
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=master --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=master -n workbench && kubectl logs -lapp.kubernetes.io/component=master -n workbench
+          kubectl get pods -n workbench
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=oauth2-proxy -n workbench && kubectl logs -lapp.kubernetes.io/component=oauth2-proxy -n workbench
+          kubectl get pods -n workbench
+
+      - name: Wait for MongoDB + Workbench to start
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=mongodb --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=mongodb -n workbench && kubectl logs -lapp.kubernetes.io/component=mongodb -n workbench
+          kubectl get pods -n workbench
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=workbench -n workbench && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c wait-for-oauth2-proxy && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c webui && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c apiserver
+          kubectl get pods -n workbench
+
+      - name: "Test Connection - Ingress -> OAuth2 Proxy"
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=oauth2-proxy --for condition=Ready --timeout 10s
+          sleep 2
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/oauth2/auth
+
+      - name: "Test Connection - Ingress -> Workbench API"
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
+          sleep 2
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/version
+
+      - name: "Test Connection - Workbench API -> MongoDB"
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 15s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=mongodb --for condition=Ready --timeout 10s
+          sleep 2
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/services
+
+      - name: "Test Connection - Ingress -> WebUI"
+        run: |
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
+          sleep 2
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/frontend.json
+
+      - name: "Cleanup: Uninstall Helm release"
+        if: ${{ always() }}
+        run: |
+          helm uninstall workbench -n workbench
+
+      - name: "Cleanup: Delete namespace"
+        if: ${{ always() }}
+        run: |
+          kubectl delete namespace workbench

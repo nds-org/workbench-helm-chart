@@ -75,6 +75,14 @@ spec:
           items:
           - key: backend.json
             path: backend.json
+{{- if and (.Values.config.frontend.live_reload) (not (eq .Values.workingDirectory "")) }}
+      - name: webuisrc
+        hostPath:
+          path: "{{ .Values.workingDirectory }}/src/webui/"         # for live_reload
+      - name: apisrc
+        hostPath:
+          path: "{{ .Values.workingDirectory }}/src/apiserver/"
+{{- end }}
 {{- with .Values.controller.extraVolumes }}
 {{ toYaml . | indent 6 }}
 {{- end }}
@@ -98,7 +106,10 @@ spec:
 {{- with .Values.controller.extraVolumeMounts.webui }}
 {{ toYaml . | indent 8 }}
 {{- end }}
-{{- if not .Values.config.frontend.live_reload }}
+{{- if .Values.config.frontend.live_reload }}
+        - mountPath: /app/                            # for live_reload
+          name: webuisrc
+{{- else }}
         - name: frontend-config
           mountPath: /usr/share/nginx/html/frontend.json
           subPath: frontend.json
@@ -115,12 +126,18 @@ spec:
 {{- with .Values.controller.extraVolumeMounts.apiserver }}
 {{ toYaml . | indent 8 }}
 {{- end }}
+{{- if .Values.config.frontend.live_reload }}
+        - mountPath: /app/
+          name: apisrc
+{{- else }}
         - name: frontend-config
           mountPath: /app/env/frontend.json
           subPath: frontend.json
         - name: backend-config
           mountPath: /app/env/backend.json
           subPath: backend.json
+{{- end }}
+
         env:
           - name: CONFIG_HASH
             valueFrom:
