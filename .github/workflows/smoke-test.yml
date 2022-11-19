@@ -55,7 +55,10 @@ jobs:
 
       - name: Clone repos, compile source, fetch deps, and install (localdev + ci + livereload)
         run: |
-          make dev
+          make check_required
+          make dep
+          make clone
+          make compile
           helm upgrade --debug --install workbench -n workbench . --create-namespace -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml
 
       - name: Output Helm chart templates (for debugging)
