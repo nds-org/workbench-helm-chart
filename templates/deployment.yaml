@@ -75,7 +75,7 @@ spec:
           items:
           - key: backend.json
             path: backend.json
-{{- if and (.Values.config.frontend.live_reload) (not eq .Values.workingDirectory "") }}
+{{- if and (.Values.config.frontend.live_reload) (not (eq .Values.workingDirectory "")) }}
       - name: webuisrc
         hostPath:
           path: "{{ .Values.workingDirectory }}/src/webui/"         # for live_reload
