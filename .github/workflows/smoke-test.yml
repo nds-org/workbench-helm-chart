@@ -53,17 +53,17 @@ jobs:
           cat .env | sed -e 's/WHICH_ARGS=-s/WHICH_ARGS=/' -e 's/REALM_IMPORT=true/REALM_IMPORT=false/' -e "s/KUBE_CONTEXT=docker-desktop/KUBE_CONTEXT=$(kubectl config current-context)/" > .env
           cat .env
 
+      - name: Output Helm chart templates (for debugging)
+        run: |
+          make dep
+          helm template --debug --dry-run workbench -n workbench . -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml --set workingDirectory="${PWD}"
+
       - name: Clone repos, compile source, fetch deps, and install (localdev + ci + livereload)
         run: |
-          make check_required
           make dep
           make clone
           make compile
           helm upgrade --debug --install workbench -n workbench . --create-namespace -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml --set workingDirectory="${PWD}"
-
-      - name: Output Helm chart templates (for debugging)
-        run: |
-          helm template --debug --dry-run workbench -n workbench . -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml
 
       - name: Wait for NFS Server to start
         run: |

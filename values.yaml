@@ -4,9 +4,11 @@
 
 ### Kubernetes deployment options
 
+# Populate this should be set if config.frontend.live_reload is true (--set workingDirectory="${PWD}")
+workingDirectory: ""
+
 # Need to define a custom role and binding to wait-for-keycloak
 extraDeploy: []
-workingDirectory: ""
 
 controller:
   kind: Deployment   # default: Deployment

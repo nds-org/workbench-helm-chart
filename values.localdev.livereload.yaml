@@ -1,4 +1,5 @@
 
+workingDirectory: ""
 
 config:
   frontend:
@@ -16,20 +17,20 @@ controller:
       value: "true"
 
   # Override frontend mountPath (default: /usr/share/nginx/html/)
-  extraVolumeMounts:
-    webui:
-    - mountPath: /app/                            # for live_reload
-      name: webuisrc
-    apiserver:
-    - mountPath: /app/
-      name: apisrc
+  #extraVolumeMounts:
+  #  webui:
+  #  - mountPath: /app/                            # for live_reload
+  #    name: webuisrc
+  #  apiserver:
+  #  - mountPath: /app/
+  #    name: apisrc
 
   # Create volumes from the source code on the host machine
-  extraVolumes:
-    - name: webuisrc
-      hostPath:
-        path: {{ .Values.workingDirectory }}/src/webui/         # for live_reload
-    - name: apisrc
-      hostPath:
-        path: {{ .Values.workingDirectory }}/src/apiserver
+  #extraVolumes:
+  #  - name: webuisrc
+  #    hostPath:
+  #      path: "{{ .Values.workingDirectory }}/src/webui/"         # for live_reload
+  #  - name: apisrc
+  #    hostPath:
+  #      path: "{{ .Values.workingDirectory }}/src/apiserver/"
 
