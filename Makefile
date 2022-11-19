@@ -87,25 +87,25 @@ check_optional: check_git check_docker check_yarn
 	echo "$(SUCCESS) all optional dependencies are installed and ready."
 
 check_kubectl:
-	which -s kubectl || (echo '$(FAILED) Please install kubectl to use this Helm chart' && exit 1)
+	which $(WHICH_ARGS) kubectl || (echo '$(FAILED) Please install kubectl to use this Helm chart' && exit 1)
 	echo "$(SUCCESS) kubectl is installed and ready."
 	make check_context
 	echo "$(SUCCESS) kubectl is using context: $(KUBE_CONTEXT)"
 
 check_helm:
-	which -s helm || (echo '$(FAILED) Please install helm v3 to use this Helm chart' && exit 1)
+	which $(WHICH_ARGS) helm || (echo '$(FAILED) Please install helm v3 to use this Helm chart' && exit 1)
 	echo "$(SUCCESS) helm is installed and ready."
 	
 check_git:
-	which -s git || (echo '$(FAILED) Please install git to use "make clone/pull"' && exit 1)
+	which $(WHICH_ARGS) git || (echo '$(FAILED) Please install git to use "make clone/pull"' && exit 1)
 	echo "$(SUCCESS) git is installed and ready."
 
 check_docker:
-	which -s docker || (echo '$(FAILED) Please install docker to use "make build/push"' && exit 1)
+	which $(WHICH_ARGS) docker || (echo '$(FAILED) Please install docker to use "make build/push"' && exit 1)
 	echo "$(SUCCESS) docker is installed and ready."
 
 check_yarn:
-	which -s yarn || (echo '$(FAILED) Please install yarn to use "make rebuild"' && exit 1)
+	which $(WHICH_ARGS) yarn || (echo '$(FAILED) Please install yarn to use "make rebuild"' && exit 1)
 	echo "$(SUCCESS) yarn is installed and ready."
 
 check_context:

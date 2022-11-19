@@ -40,17 +40,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install zsh
-        run: sudo apt-get update; sudo apt-get install zsh
-
-      - name: Zsh-huh
-        run: |
-          which zsh || echo "No which zsh"
-          command -v zsh || echo "No command zsh"
-          ls -la /usr/bin/zsh || echo "No zsh at /usr/bin"
-          ls -la /bin/zsh || echo "No zsh at /bin/zsh"
-
-
       - name: Set up Helm
         uses: azure/setup-helm@v3
         with:
@@ -61,17 +50,15 @@ jobs:
 
       - name: Setup environment
         run: |
-          cat .env | sed -e 's/REALM_IMPORT=true/REALM_IMPORT=false/' -e "s/KUBE_CONTEXT=docker-desktop/KUBE_CONTEXT=$(kubectl config current-context)/" > .env
+          cat .env | sed -e 's/WHICH_ARGS=-s/WHICH_ARGS=/' -e 's/REALM_IMPORT=true/REALM_IMPORT=false/' -e "s/KUBE_CONTEXT=docker-desktop/KUBE_CONTEXT=$(kubectl config current-context)/" > .env
           cat .env
 
       - name: Clone repos, compile source, fetch deps, and install (localdev + ci + livereload)
-        shell: /usr/bin/zsh{0}
         run: |
           make dev
           helm upgrade --debug --install workbench -n workbench . --create-namespace -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml
 
       - name: Output Helm chart templates (for debugging)
-        shell: /usr/bin/zsh{0}
         run: |
           helm template --debug --dry-run workbench -n workbench . -f values.localdev.yaml -f values.ci.yaml -f values.localdev.livereload.yaml
 
@@ -95,37 +82,30 @@ jobs:
           kubectl get pods -n workbench
 
       - name: Show Workbench status
-        shell: /usr/bin/zsh{0}
         run: |
           make status
 
       - name: Describe Workbench Pod (view Pod events)
-        shell: /usr/bin/zsh{0}
         run: |
           make describe
 
       - name: Rebuild Docker images
-        shell: /usr/bin/zsh{0}
         run: |
           make build
 
       - name: Restart Workbench Pod
-        shell: /usr/bin/zsh{0}
         run: |
           make restart
 
       - name: Run make uninstall
-        shell: /usr/bin/zsh{0}
         run: |
           make uninstall
 
       - name: Run make clean
-        shell: /usr/bin/zsh{0}
         run: |
           make clean
 
       - name: Run make clean_all
-        shell: /usr/bin/zsh{0}
         run: |
           make clean_all
 
