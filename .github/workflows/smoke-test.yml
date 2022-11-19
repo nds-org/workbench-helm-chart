@@ -1,6 +1,8 @@
 name: Smoke Test
 
 on: 
+  schedule:
+    - cron:  '0 0 6 * * ?'
   pull_request:
     branches:
       - main
