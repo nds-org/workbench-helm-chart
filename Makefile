@@ -137,10 +137,10 @@ dev: check_required dep clone compile
 	if [ "$(REALM_IMPORT)" != "true" ]; then helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml; fi
 	if [ "$(REALM_IMPORT)" == "true" ]; then make realm_import_secret; helm upgrade --install $(NAME) -n $(NAMESPACE) $(CHART_PATH) --create-namespace -f values.localdev.yaml -f values.localdev.livereload.yaml -f values.realmimport.yaml --set workingDirectory="${PWD}"; fi
 
-uninstall: check_helm 
+uninstall: check_required
 	helm uninstall --wait -n $(NAMESPACE) $(NAME)
 
-template: check_helm
+template: check_required
 	helm template --debug --dry-run $(NAME) -n $(NAMESPACE) $(CHART_PATH)
 
 
