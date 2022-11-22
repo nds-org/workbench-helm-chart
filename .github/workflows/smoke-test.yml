@@ -1,8 +1,9 @@
 name: Smoke Test
 
 on: 
+  # Run every day at 6AM CST
   schedule:
-    - cron:  '0 0 6 * *'
+    - cron:  '0 12 * * *'
   pull_request:
     branches:
       - main
