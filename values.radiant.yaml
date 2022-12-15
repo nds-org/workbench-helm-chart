@@ -5,7 +5,7 @@
 ingress:
   api:
     annotations:
-      cert-manager.io/cluster-issuer: "acmedns-staging"
+      cert-manager.io/cluster-issuer: "acmedns-issuer-staging"
   tls:
     - hosts:
         - changeme.ndslabs.org
