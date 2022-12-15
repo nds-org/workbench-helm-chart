@@ -57,7 +57,7 @@ config:
 mongodb:
   enabled: true
   global:
-    storageClass: "longhorn"
+    storageClass: "csi-cinder-sc-retain"
   updateStrategy:
     type: Recreate
   auth:
@@ -82,7 +82,7 @@ keycloak:
 
 oauth2-proxy:
   global:
-    storageClass: "longhorn"
+    storageClass: "csi-cinder-sc-retain"
   ingress:
     hostname: changeme.ndslabs.org
     tls:
