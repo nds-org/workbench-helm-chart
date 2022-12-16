@@ -29,3 +29,6 @@ spec:
             name: {{ .Release.Name }}
             port: 
               number: 5000
+{{ with .Values.ingress.api.extraRules }}
+  {{ toYaml . | nindent 2 }}
+{{ end }}
