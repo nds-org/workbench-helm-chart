@@ -47,9 +47,11 @@ ingress:
     - hosts:
       - "kubernetes.docker.internal"
   api:
+    extraRules: []
     annotations: {}
       #cert-manager.io/issuer: "acmedns-staging"
   webui:
+    extraRules: []
     annotations: {}
 
 

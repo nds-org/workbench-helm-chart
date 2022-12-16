@@ -64,8 +64,10 @@ These options affect the Ingress resources created by this chart.
 | `ingress.host` | string | Host name to use for Ingress resources | `""` |
 | `ingress.tls` | array[map] | TLS config to set for Ingress resources | `[]` |
 | `ingress.tls.hosts` | array[string] | Host names to set for TLS on Ingress resource | `[]` |
-| `ingress.api.annotations` | map | Annotations to set for `api` Ingress resources | `{}` |
-| `ingress.webui.annotations` | map | Annotations to set for `webui` Ingress resources | `{}` |
+| `ingress.api.annotations` | map | Annotations to set for `api` Ingress resource | `{}` |
+| `ingress.api.extraRules` | array | List of additional ingress rules for `api` Ingress resource | `[]` |
+| `ingress.webui.annotations` | map | Annotations to set for `webui` Ingress resource | `{}` |
+| `ingress.webui.extraRules` | array | Lisst of additional ingress rules for `webui` Ingress resource | `[]` |
 
 ### Workbench Options
 These options affect the internals of Workbench and the customization of the WebUI.
