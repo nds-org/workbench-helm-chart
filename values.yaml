@@ -161,7 +161,7 @@ ingress-nginx:
 
 
 # Enable this to use an external NFS server to provision user volumes (e.g. nfs-condo)
-nfs-client-provisioner:
+nfs-subdir-external-provisioner:
   enabled: false   # WARNING: experimental
   nfs:
     server: "workbench-nfs-server-provisioner.workbench.svc.cluster.local"
