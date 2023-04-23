@@ -148,7 +148,7 @@ These options are currently present, but may not yet be used.
 * [MongoDB](https://artifacthub.io/packages/helm/bitnami/mongodb)
 * [Keycloak](https://artifacthub.io/packages/helm/bitnami/keycloak)
 * [OAuth2 Proxy](https://artifacthub.io/packages/helm/bitnami/oauth2-proxy)
-* [NFS Client Provisioner](https://artifacthub.io/packages/helm/supertetelman/nfs-client-provisioner)
+* [NFS Subdir External Provisioner](https://artifacthub.io/packages/helm/nfs-subdir-external-provisioner/nfs-subdir-external-provisioner)
 * [NFS Server Provisioner](https://artifacthub.io/packages/helm/kvaps/nfs-server-provisioner)
 * [NGINX Ingress Controller](https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx)
 
@@ -210,13 +210,22 @@ If you already have a volume provisioner running that supports ReadWriteMany, yo
 
 NOTE: You should only need the client OR the server, but you do not need both running.
 
-#### (Experimental) NFS Client Provisioner: use an existing NFS server to provision RWM volumes
+#### (Experimental) NFS Subdir External Provisioner: use an existing NFS server to provision RWM volumes
 
-To run a local [NFS Client Provisioner](https://artifacthub.io/packages/helm/supertetelman/nfs-client-provisioner) alongside Workbench, you can set `nfs-client-provisioner.enabled` to `true` in the `values.yaml`:
+To run a local [NFS Subdir External Provisioner](https://artifacthub.io/packages/helm/nfs-subdir-external-provisioner/nfs-subdir-external-provisioner) alongside Workbench, you can set `nfs-subdir-external-provisioner.enabled` to `true` in the `values.yaml`:
 ```yaml
-nfs-client-provisioner:
+nfs-subdir-external-provisioner:
   enabled: true
-  # ... include any other config values from the nfs-client-provisioner chart
+  nfs:
+    # Use in-cluster DNS to resolve
+    # server: "workbench-nfs-server-provisioner.workbench.svc.cluster.local"
+    
+    # Use external hostname
+    server: "taiga-nfs.ncsa.illinois.edu"
+    path: "/taiga/ncsa/radiant/<PROJECT_ID>"
+    mountOptions:
+    - tcp
+    - nfsvers=3
 ```
 
 See https://artifacthub.io/packages/helm/supertetelman/nfs-client-provisioner for configuration options
