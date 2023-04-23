@@ -208,9 +208,11 @@ You'll need a StorageClass on your cluster that supports ReadWriteMany.
 
 If you already have a volume provisioner running that supports ReadWriteMany, you can skip this section.
 
-NOTE: You should only need the client OR the server, but you do not need both running.
+NOTE: You should only need the subdir OR the server, but you do not need to run both.
 
 #### (Experimental) NFS Subdir External Provisioner: use an existing NFS server to provision RWM volumes
+
+The NFS Subdir External Provisioner is a small piece of code that will talk to an existing NFS server to provision RWM volumes.
 
 To run a local [NFS Subdir External Provisioner](https://artifacthub.io/packages/helm/nfs-subdir-external-provisioner/nfs-subdir-external-provisioner) alongside Workbench, you can set `nfs-subdir-external-provisioner.enabled` to `true` in the `values.yaml`:
 ```yaml
@@ -228,7 +230,7 @@ nfs-subdir-external-provisioner:
     - nfsvers=3
 ```
 
-See https://artifacthub.io/packages/helm/supertetelman/nfs-client-provisioner for configuration options
+See https://artifacthub.io/packages/helm/nfs-subdir-external-provisioner/nfs-subdir-external-provisioner for configuration options
 
 #### NFS Server Provisioner: run your own NFS server to provision RWM volumes
 
