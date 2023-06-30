@@ -69,7 +69,7 @@ ingress-nginx:
   enabled: false
 
 # Disable NFS client (use cluster built-in)
-nfs-client-provisioner:
+nfs-subdir-external-provisioner:
   enabled: false
 
 # Disable local NFS server
