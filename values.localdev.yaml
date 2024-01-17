@@ -6,7 +6,43 @@
 
 
 
-extraDeploy: []
+extraDeploy:
+- apiVersion: traefik.containo.us/v1alpha1
+  kind: Middleware
+  metadata:
+    name: redirect-to-https
+    namespace: workbench
+  spec:
+    redirectScheme:
+      scheme: https
+      permanent: true
+- apiVersion: traefik.containo.us/v1alpha1
+  kind: Middleware
+  metadata:
+    name: forwardauth
+    namespace: workbench
+  spec:
+    forwardAuth:
+      address: https://kubernetes.docker.internal/oauth2/auth
+      trustForwardHeader: true
+      authResponseHeaders:
+        - X-Auth-Request-Access-Token
+        - Authorization
+      tls:
+        insecureSkipVerify: true
+- apiVersion: traefik.containo.us/v1alpha1
+  kind: Middleware
+  metadata:
+    name: redirect-to-login
+    namespace: workbench
+  spec:
+    errors:
+      status:
+        - "401"
+      query: "/oauth2/start?rd={url}"
+      service:
+        name: workbench-oauth2-proxy
+        port: 80
 
 controller:
   strategy_type: "RollingUpdate"  # default: RollingUpdate
@@ -17,7 +53,8 @@ controller:
     apiserver: "ndslabs/apiserver:develop"
 
 ingress:
-  class: "nginx"
+  #class: "nginx"
+  class: "traefik"
   host: "kubernetes.docker.internal"
   tls:
     - hosts:
@@ -71,12 +108,14 @@ config:
           #ingress.kubernetes.io/auth-type: forward
           #ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
           #ingress.kubernetes.io/signin-url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
+          #traefik.ingress.kubernetes.io/router.middlewares: "workbench-redirect-to-https@kubernetescrd,workbench-redirect-to-login@kubernetescrd,workbench-forwardauth@kubernetescrd"
 
           # Auth annotations for NGINX
-          nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
-          nginx.ingress.kubernetes.io/signin-url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
-          nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
-        class: nginx
+          #nginx.ingress.kubernetes.io/auth-url: "https://kubernetes.docker.internal/oauth2/auth"
+          #nginx.ingress.kubernetes.io/signin-url: "https://kubernetes.docker.internal/oauth2/start?rd=https%3A%2F%2Fkubernetes.docker.internal%2Fmy-apps"
+          #nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email, x-auth-request-access-token, x-auth-request-redirect, x-auth-request-preferred-username"
+        #class: nginx
+        class: traefik
         tls:
           hosts:
            - kubernetes.docker.internal
@@ -90,7 +129,7 @@ config:
 
 # Enable this to run an NGINX ingress controller (if you aren't running another ingress controller)
 ingress-nginx:
-  enabled: true
+  enabled: false
   controller:
     # If you have an existing TLS secret, you can uncomment this to specify it here
     # Otherwise NGINX will generate a self-signed and use that instead
@@ -123,13 +162,13 @@ keycloak:
   global:
     storageClass: "hostpath"
   ingress:
-    className: nginx
+    #ingressClassName: nginx
+    ingressClassName: traefik
     tls: true
     annotations:
-      kubernetes.io/ingress.class: nginx
-
       # without this, signups (and other large proxy bodies) will fail with a 502
       nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+
     extraTls:
       - hosts:
         - kubernetes.docker.internal
@@ -157,7 +196,7 @@ oauth2-proxy:
 
     # Authorization config:
     #- --email-domain=illinois.edu
-    - --whitelist-domain=.docker.internal     # needed to use the "rd" query string parameter
+    - --whitelist-domain=.kubernetes.docker.internal     # needed to use the "rd" query string parameter
     - --cookie-domain=.docker.internal        # forward your cookie automatically to subdomains
     #- --cookie-samesite=lax
     - --scope=email profile openid
@@ -171,7 +210,8 @@ oauth2-proxy:
     - --force-json-errors=true
   ingress:
     enabled: true
-    ingressClassName: nginx
+    #ingressClassName: nginx
+    ingressClassName: traefik
     path: /oauth2/
     pathtype: Prefix
     hostname: kubernetes.docker.internal
@@ -193,8 +233,10 @@ mongodb:
       - name: MONGO_URI
         value: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
       - name: GIT_REPO
+        #value: "https://github.com/cheese-hub/catalog"
         value: "https://github.com/nds-org/ndslabs-specs"
       - name: GIT_BRANCH
+        #value: "master"
         value: "develop"
   architecture: standalone   # WARNING: experimental
   #replicaCount: 3
