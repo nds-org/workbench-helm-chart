@@ -236,6 +236,10 @@ oauth2-proxy:
   image:
     registry: docker.io
     repository: bitnamilegacy/oauth2-proxy
+  redis:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/redis
   initContainers: []
   extraArgs:
     # Github OIDC config:
