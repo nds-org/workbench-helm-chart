@@ -20,4 +20,3 @@ certs/
 acmedns*.json
 charts/
 src/
-Chart.lock

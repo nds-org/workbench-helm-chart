@@ -1,0 +1,21 @@
+dependencies:
+- name: oauth2-proxy
+  repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+  version: 3.1.0
+- name: ingress-nginx
+  repository: https://kubernetes.github.io/ingress-nginx
+  version: 4.1.4
+- name: nfs-subdir-external-provisioner
+  repository: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+  version: 4.0.18
+- name: nfs-server-provisioner
+  repository: https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner/
+  version: 1.4.0
+- name: mongodb
+  repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+  version: 13.0.2
+- name: keycloak
+  repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+  version: 9.6.9
+digest: sha256:9ca436433f84c25522594e450cbe2ccc81885a68a535eb37711ad27c1b73db09
+generated: "2026-02-13T16:50:31.698037-06:00"
