@@ -199,7 +199,7 @@ logs: check_kubectl
 	if [ "$(target)" == "" ]; then echo 'Please specify a target: api (apiserver), ui (webui), proxy (oauth2-proxy), db (mongo, mongodb), kc (keycloak), nginx (ingress)'; echo 'Example usage: "make target=apiserver logs"'; fi
 	if [ "$(target)" == "api" -o "$(target)" == "apiserver" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=$(NAME) -n $(NAMESPACE) -c apiserver; fi
 	if [ "$(target)" == "ui" -o "$(target)" == "webui" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=$(NAME) -n $(NAMESPACE) -c webui; fi
-	if [ "$(target)" == "db" -o "$(target)" == "mongo" -o "$(target)" == "mongodb" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=mongodb; fi
+	if [ "$(target)" == "db" -o "$(target)" == "mongo" -o "$(target)" == "mongodb" ]; then kubectl logs -f -lapp=workbench-mongodb-svc -n $(NAMESPACE); fi
 	if [ "$(target)" == "kc" -o "$(target)" == "keycloak" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=keycloak -n $(NAMESPACE); fi
 	if [ "$(target)" == "nginx" -o "$(target)" == "ingress" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=ingress-nginx -n $(NAMESPACE); fi
 	if [ "$(target)" == "proxy" -o "$(target)" == "oauth2-proxy" ]; then kubectl logs -f -lapp.kubernetes.io/instance=$(NAME),app.kubernetes.io/name=oauth2-proxy -n $(NAMESPACE); fi

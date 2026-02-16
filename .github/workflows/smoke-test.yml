@@ -124,7 +124,7 @@ jobs:
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
           kubectl wait pods -n workbench -lapp=workbench-mongodb-svc --for condition=Ready --timeout 10s
           sleep 2
-          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/services
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure http://localhost:5000/api/v1/services
 
       - name: "Test Connection - Ingress -> WebUI"
         run: |
@@ -228,7 +228,7 @@ jobs:
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
           kubectl wait pods -n workbench -lapp=workbench-mongodb-svc --for condition=Ready --timeout 10s
           sleep 2
-          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/services
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure http://localhost:5000/api/v1/services
 
       - name: "Test Connection - Ingress -> WebUI"
         run: |
