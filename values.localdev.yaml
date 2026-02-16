@@ -108,7 +108,7 @@ config:
     userapps:
       home_storage:
         enabled: true
-        storage_class: ""
+        storage_class: nfs
       shared_storage:
         enabled: false
       ingress:

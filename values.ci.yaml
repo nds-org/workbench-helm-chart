@@ -145,7 +145,7 @@ mongodb:
       - name: FORCE
         value: "true"
       - name: MONGO_URI
-        value: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
+        value: "mongodb://workbench:workbench@workbench-mongodb-svc.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
       - name: GIT_REPO
         value: "https://github.com/nds-org/ndslabs-specs"
       - name: GIT_BRANCH

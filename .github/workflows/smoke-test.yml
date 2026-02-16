@@ -99,7 +99,7 @@ jobs:
 
       - name: Wait for MongoDB + Workbench to start
         run: |
-          kubectl wait pods -n workbench -lapp=workbench-mongodb-svc --for condition=Ready --timeout=90s || kubectl describe pod -lapp.kubernetes.io/component=mongodb -n workbench && kubectl logs -lapp=workbench-mongodb-svc -n workbench -c mongod
+          kubectl wait pods -n workbench -lapp=workbench-mongodb-svc --for condition=Ready --timeout=90s || kubectl describe pod -lapp=workbench-mongodb-svc -n workbench && kubectl logs -lapp=workbench-mongodb-svc -n workbench -c mongod
           kubectl get pods -n workbench
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout=300s || kubectl describe pod -lapp.kubernetes.io/component=workbench -n workbench && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c wait-for-oauth2-proxy && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c webui && kubectl logs -lapp.kubernetes.io/component=workbench -n workbench -c apiserver
           kubectl get pods -n workbench
@@ -122,7 +122,7 @@ jobs:
         run: |
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 15s
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
-          kubectl wait pods -n workbench -lapp.kubernetes.io/component=mongodb --for condition=Ready --timeout 10s
+          kubectl wait pods -n workbench -lapp=workbench-mongodb-svc --for condition=Ready --timeout 10s
           sleep 2
           kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl --fail --insecure https://workbench-ingress-nginx-controller.workbench.svc.cluster.local/api/v1/services
 
