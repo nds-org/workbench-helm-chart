@@ -27,6 +27,10 @@ dependencies:
     version: ~1.8.0
     repository: "https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner/"
     condition: nfs-server-provisioner.enabled
+  - name: mongodb
+    version: ~13.0.1
+    repository: "https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami"
+    condition: mongodb.enabled
   - name: keycloak
     version: ~9.6.9
     repository: "https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami"
