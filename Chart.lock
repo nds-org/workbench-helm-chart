@@ -8,17 +8,14 @@ dependencies:
 - name: nfs-subdir-external-provisioner
   repository: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
   version: 4.0.18
-- name: mongodb-kubernetes
-  repository: https://mongodb.github.io/helm-charts
-  version: 1.5.0
 - name: nfs-server-provisioner
   repository: https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner/
   version: 1.8.0
-- name: mongodb
-  repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
-  version: 13.0.2
+- name: mongodb-kubernetes
+  repository: https://mongodb.github.io/helm-charts
+  version: 1.5.0
 - name: keycloak
   repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
   version: 9.6.9
-digest: sha256:8b4b6590fac2b7e7978fde2e1f92e8bff333324fcbc2b9956423e75dc2888b88
-generated: "2026-02-16T07:01:51.821948-06:00"
+digest: sha256:f33481139f673c85867f8bd07561cb02ee4cdc753f28f53612a59db754f93bb7
+generated: "2026-02-16T14:54:36.096426-06:00"
