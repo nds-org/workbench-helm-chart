@@ -125,7 +125,8 @@ jobs:
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
           kubectl wait pods -n workbench -lapp=workbench-mongodb-svc --for condition=Ready --timeout 10s
           sleep 2
-          kubectl get pods,mdbc,pvc workbench-mongodb -n workbench
+          kubectl get pods,pvc -n workbench
+          kubectl get mdbc workbench-mongodb -n workbench
           kubectl describe mdbc workbench-mongodb -n workbench
           kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl -vvv --fail --insecure http://localhost:5000/api/v1/services
 
