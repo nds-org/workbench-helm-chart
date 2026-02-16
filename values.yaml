@@ -269,7 +269,9 @@ mongodb:
   enabled: true
   image:
     registry: docker.io
-    repository: bitnamilegacy/mongodb
+#    repository: bitnamilegacy/mongodb
+    repository: mongo
+    tag: latest
   autoimport:
     enabled: true
     annotations:
@@ -288,7 +290,7 @@ mongodb:
   #replicaCount: 3
   auth:
     rootUser: workbench
-    rootPassword: changeme
+    rootPassword: workbench
 
   # TODO: Test AWS + GKE PVs
   persistent:

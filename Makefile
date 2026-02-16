@@ -185,7 +185,7 @@ acmedns_secret: check_kubectl
 	kubectl create secret generic acme-dns -n $(NAMESPACE) --from-file=acmedns.json
 
 status: check_kubectl
-	kubectl get pods,pvc -n $(NAMESPACE)
+	kubectl get pods,mdbc,pvc -n $(NAMESPACE)
 
 watch: check_kubectl
 	kubectl get pods -n $(NAMESPACE) -w
