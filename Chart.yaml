@@ -10,7 +10,7 @@ version: 1.4.0
 dependencies:
   - name: oauth2-proxy
     version: ~3.1.0
-    repository: "https://charts.bitnami.com/bitnami"
+    repository: "https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami"
   - name: ingress-nginx
     version: ~4.1.4
     repository: "https://kubernetes.github.io/ingress-nginx"
@@ -25,9 +25,9 @@ dependencies:
     condition: nfs-server-provisioner.enabled
   - name: mongodb
     version: ~13.0.1
-    repository: "https://charts.bitnami.com/bitnami"
+    repository: "https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami"
     condition: mongodb.enabled
   - name: keycloak
     version: ~9.6.9
-    repository: "https://charts.bitnami.com/bitnami"
+    repository: "https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami"
     condition: keycloak.enabled

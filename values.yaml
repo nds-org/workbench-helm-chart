@@ -182,6 +182,9 @@ nfs-server-provisioner:
 # Enable this to run a local Keycloak instance (development only)
 keycloak:
   enabled: false
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/keycloak
   httpRelativePath: "/auth/"
   auth:
     adminUser: "admin"
@@ -211,6 +214,9 @@ keycloak:
         password: workbench
   postgresql:
     enabled: true
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/postgresql
   service:
     type: ClusterIP
   ingress:
@@ -227,6 +233,13 @@ keycloak:
 
 
 oauth2-proxy:
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/oauth2-proxy
+  redis:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/redis
   initContainers: []
   extraArgs:
     # Github OIDC config:
@@ -254,6 +267,9 @@ oauth2-proxy:
 
 mongodb:
   enabled: true
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/mongodb
   autoimport:
     enabled: true
     annotations:
