@@ -120,6 +120,7 @@ jobs:
 
       - name: "Test Connection - Workbench API -> MongoDB"
         run: |
+          kubectl wait mdbc workbench-mongodb -n workbench --for=jsonpath='{.status.phase}'=Running --timeout 300s
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 15s
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
           kubectl wait pods -n workbench -lapp=workbench-mongodb-svc --for condition=Ready --timeout 10s
@@ -224,6 +225,7 @@ jobs:
 
       - name: "Test Connection - Workbench API -> MongoDB"
         run: |
+          kubectl wait mdbc workbench-mongodb -n workbench --for=jsonpath='{.status.phase}'=Running --timeout 300s
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=controller --for condition=Ready --timeout 15s
           kubectl wait pods -n workbench -lapp.kubernetes.io/component=workbench --for condition=Ready --timeout 10s
           kubectl wait pods -n workbench -lapp=workbench-mongodb-svc --for condition=Ready --timeout 10s
