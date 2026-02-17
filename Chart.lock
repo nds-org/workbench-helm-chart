@@ -10,12 +10,12 @@ dependencies:
   version: 4.0.18
 - name: nfs-server-provisioner
   repository: https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner/
-  version: 1.4.0
-- name: mongodb
-  repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
-  version: 13.0.2
+  version: 1.8.0
+- name: mongodb-kubernetes
+  repository: https://mongodb.github.io/helm-charts
+  version: 1.5.0
 - name: keycloak
   repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
   version: 9.6.9
-digest: sha256:9ca436433f84c25522594e450cbe2ccc81885a68a535eb37711ad27c1b73db09
-generated: "2026-02-13T16:50:31.698037-06:00"
+digest: sha256:f33481139f673c85867f8bd07561cb02ee4cdc753f28f53612a59db754f93bb7
+generated: "2026-02-16T14:54:36.096426-06:00"

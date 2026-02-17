@@ -6,7 +6,56 @@
 
 
 
-extraDeploy: []
+extraDeploy:
+- apiVersion: mongodbcommunity.mongodb.com/v1
+  kind: MongoDBCommunity
+  metadata:
+    name: workbench-mongodb
+  spec:
+    members: 1
+    type: ReplicaSet
+    version: "6.0.5"
+    security:
+      authentication:
+        modes: ["SCRAM"]
+    users:
+      - name: workbench
+        db: admin
+        passwordSecretRef: # a reference to the secret that will be used to generate the user's password
+          name: workbench-password
+        roles:
+          - name: clusterAdmin
+            db: admin
+          - name: userAdminAnyDatabase
+            db: admin
+          - db: admin
+            name: backup
+          - db: admin
+            name: restore
+          - db: admin
+            name: dbOwner
+          - name: userAdminAnyDatabase
+            db: ndslabs
+          - db: ndslabs
+            name: backup
+          - db: ndslabs
+            name: restore
+          - db: ndslabs
+            name: dbOwner
+        scramCredentialsSecretName: workbench-password
+    additionalMongodConfig:
+      storage.wiredTiger.engineConfig.journalCompressor: zlib
+
+# the user credentials will be generated from this secret
+# once the credentials are generated, this secret is no longer required
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: workbench-password
+  type: Opaque
+  stringData:
+    password: workbench
+  
 
 controller:
   strategy_type: "RollingUpdate"  # default: RollingUpdate
@@ -38,7 +87,7 @@ config:
   backend:
     # Point at internal mongodb
     mongo:
-      uri: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
+      uri: "mongodb://workbench:workbench@workbench-mongodb-svc.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
       db: ndslabs
 
     # Point at internal Keycloak instance + imported realm
@@ -191,7 +240,7 @@ mongodb:
       - name: FORCE
         value: "true"
       - name: MONGO_URI
-        value: "mongodb://workbench:workbench@workbench-mongodb.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
+        value: "mongodb://workbench:workbench@workbench-mongodb-svc.workbench.svc.cluster.local:27017/ndslabs?authSource=admin"
       - name: GIT_REPO
         value: "https://github.com/nds-org/ndslabs-specs"
       - name: GIT_BRANCH
