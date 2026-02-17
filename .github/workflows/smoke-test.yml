@@ -2,14 +2,14 @@ name: Smoke Test
 
 on: 
   # Automatic: Run once a month on the first of the month
-  schedule:
-    - cron:  '0 0 1 * *'
+  #schedule:
+  #  - cron:  '0 0 1 * *'
     
   # Automatic: Run on pending pull requests
-  pull_request:
-    branches:
-      - main
-      - develop
+  #pull_request:
+  #  branches:
+  #    - main
+  #    - develop
 
   # Automatic: Run when new commits are pushed to develop or main
   push:
