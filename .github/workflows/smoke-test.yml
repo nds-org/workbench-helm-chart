@@ -128,7 +128,7 @@ jobs:
           kubectl get pods,pvc -n workbench
           kubectl get mdbc workbench-mongodb -n workbench
           kubectl describe mdbc workbench-mongodb -n workbench
-          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl -vvv --fail --insecure http://localhost:5000/api/v1/services || kubectl logs -f -lapp.kubernetes.io/component=workbench -n ${NAMESPACE} -c apiserver && exit 500
+          kubectl exec -it deploy/workbench -c apiserver -n workbench -- curl -vvv --fail --insecure http://localhost:5000/api/v1/services || kubectl logs -f -lapp.kubernetes.io/component=workbench -n workbench -c apiserver && exit 500
 
       - name: "Test Connection - Ingress -> WebUI"
         run: |
